@@ -1,0 +1,4 @@
+station,intensity,year,month,day,hour,minute,intensity_equip,acceleration_max_comb
+4002932,2,2019,03,09,01,08,20,00165
+4002932,2,2019,03,13,13,49,19,00060
+4002932,1,2019,07,26,20,31,06,00071

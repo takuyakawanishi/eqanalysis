@@ -1,0 +1,3 @@
+station,intensity,year,month,day,hour,minute,intensity_equip,acceleration_max_comb
+5903810,1,2009,12,16,14,13,09,00032
+5903810,2,2010,02,21,11,50,16,00108
