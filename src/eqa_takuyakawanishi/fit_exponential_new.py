@@ -7,7 +7,7 @@ import plotly.graph_objects as go
 import numpy as np
 import pandas as pd
 import scipy.stats
-import eqanalysis.src.eqa_takuyakawanishi.eqa as eqa
+import src.eqa_takuyakawanishi.eqa as eqa
 import dashfiles.layouts.fig_template as fig_template
 
 
@@ -17,8 +17,8 @@ import dashfiles.layouts.fig_template as fig_template
 
 DATABASE_START_DATE = '19190101'
 DATABASE_END_DATE = '20191231'
-DIR_DATA = '../../data/stationwise_fine/'
-FILE2READ_META = '../../data/code_p_df.csv'
+DIR_DATA = '../../data/stationwise_fine_old_until_2019/'
+FILE2READ_META = '../../data/code_p_df_old.csv'
 
 
 ################################################################################
@@ -256,7 +256,7 @@ app.layout = dbc.Container([
                 html.Br(),
                 html.H4("Settings"),
 
-                select_station(3500000),
+                select_station(3900000),
                 cfd.date_from,
                 cfd.date_to,
                 html.Div([html.Div(id='conditions-period')]),
@@ -357,7 +357,8 @@ def check_station_is_in_the_database_and_get_available_period(_, str_code):
     if code in meta['code'].values:
         meta_1 = meta[meta['code'] == code]
         meta_1 = meta_1.reset_index(drop=True)
-        meta_1 = eqa.datetime_from_to(meta_1)
+        meta_1 = eqa.calc_date_b_date_e_duration(
+            meta_1, '1919-01-01', '2019-12-31')
         print(meta_1)
         #
         # date_from = str(meta_1.at[0, 'from'])[:8]
@@ -745,7 +746,8 @@ def set_conditions(_, dfi_dict_1, dfi_dict_2, dfi_dict_3, dfi_dict_4,
         fig = go.Figure()
         fig.add_trace(go.Scatter(
             x=dfi['interval'], y=dfi['suvf'], mode='markers',
-            marker=dict(color=px.colors.qualitative.T10[0])
+            marker=dict(color=px.colors.qualitative.T10[0]),
+            name="I >= " + str(intensity)
         ))
         slope = df_summary.at[i_int, 'ef_slope']
         if slope is not None:
@@ -756,11 +758,12 @@ def set_conditions(_, dfi_dict_1, dfi_dict_2, dfi_dict_3, dfi_dict_4,
             yls = 10 ** (log10_intercept_suvf + slope * xls)
             fig.add_trace(go.Scatter(
                 x=xls, y=yls, mode='lines',
-                line=dict(color=px.colors.qualitative.T10[1])
+                line=dict(color=px.colors.qualitative.T10[1]),
+                name="Fitted"
             ))
         fig.update_layout(
             paper_bgcolor=cff.screen_background_color,
-            xaxis_title="Intervals",
+            xaxis_title="Intervals [days]",
             yaxis_title="1 - F",
             autosize=False,
             width=cff.fig_width,

@@ -24,7 +24,7 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(dt_res, dt_expected)
 
     def test_calc_date_beginning(self):
-        meta = pd.read_csv('../../code_p_df.csv')
+        meta = pd.read_csv('../../code_p_df_old.csv')
         meta_sel = meta.iloc[[732, 765, 807]]
         meta_sel = meta_sel.reset_index(drop=True)
         res = calc_date_beginning(meta_sel)
@@ -61,7 +61,7 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(res, expected)
 
     def test_calc_date_end(self):
-        meta = pd.read_csv('../../code_p_df.csv')
+        meta = pd.read_csv('../../code_p_df_old.csv')
         meta_sel = meta.iloc[[140, 156, 240]]
         meta_sel = meta_sel.reset_index(drop=True)
         # print(meta_sel['to'])
@@ -75,7 +75,7 @@ class MyTestCase(unittest.TestCase):
         self.assertListEqual(res_date_e, expected)
 
     def test_calc_latlon(self):
-        meta = pd.read_csv('../../code_p_df.csv')
+        meta = pd.read_csv('../../code_p_df_old.csv')
         meta_sel = meta.iloc[[4298, 4299, 4300]]
         meta_sel = meta_sel.reset_index(drop=True)
         print(meta_sel)

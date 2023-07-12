@@ -1,0 +1,16 @@
+station,1000
+from,1996-04-01
+to,2010-12-31
+duration,5247
+int1,24
+int2,8
+int3,3
+int4,1
+int5,0
+int6,0
+int7,0
+slope,-0.452
+intercept,0.657
+rvalue,-0.999
+est7,0.00314
+est6,0.00887

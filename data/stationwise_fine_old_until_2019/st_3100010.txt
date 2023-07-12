@@ -1,0 +1,4 @@
+station,intensity,year,month,day,hour,minute,intensity_equip,acceleration_max_comb
+3100010,2,2009,12,18,05,41,21,00109
+3100010,1,2010,03,13,21,47,13,00036
+3100010,1,2010,03,14,17,08,12,00029
