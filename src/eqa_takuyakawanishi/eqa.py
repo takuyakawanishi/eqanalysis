@@ -253,50 +253,9 @@ def find_intensity_frequency_regression_summarize(
     return frequency, regression, summary
 
 
-#   TODO: The following two are for backward compatibility, consider remove
-#      it and revise dash_intensity_frequency.py
-# #
-# def find_intensity_frequency(available_dict, set_dict, dir_data='./'):
-#     available = pd.DataFrame.from_dict(available_dict)
-#     actual = calc_periods_durations(available, set_dict)
-#     frequency, summary = \
-#         create_intensity_frequency_table_of_period(actual, dir_data)
-#     res, est7, est6 = find_regression_int_freq(frequency)
-#     summary["from"] = summary["from"][:10]
-#     summary["to"] = summary["to"][-10:]
-#     summary["slope"] = np.round(res.slope, 3)
-#     summary["intercept"] = np.round(res.intercept, 3)
-#     summary["rvalue"] = np.round(res.rvalue, 3)
-#     summary["est7"] = round_to_k(est7, 3)
-#     summary["est6"] = round_to_k(est6, 3)
-#     return frequency, res, summary
-#
-#
-# def count_intensities(actual, dir_data='./'):
-#     columns = ["int1", "int2", "int3", "int4", "int5", "int6", "int7"]
-#     stations = actual["station"].values
-#     cum_counts_s = []
-#     for i_station, station in enumerate(stations):
-#         if actual.at[i_station, "duration"] == 0:
-#             cum_counts = np.zeros(7)
-#         else:
-#             date_b = actual.at[i_station, "from"]
-#             date_e = actual.at[i_station, "to"]
-#             df = take_data_subset_by_period(station, date_b, date_e, dir_data)
-#             if df is not None:
-#                 cum_counts = count_intensity_in_dataframe(df)
-#             else:
-#                 cum_counts = np.zeros(7)
-#         cum_counts_s.append(cum_counts)
-#     df_c = pd.DataFrame(cum_counts_s, columns=columns)
-#     df = pd.concat([actual, df_c], axis=1)
-#     return df
-
-
 ################################################################################
 #   Find high intensity earthquakes
 ################################################################################
-
 
 
 def extract_quakes_by_intensities(
@@ -342,62 +301,6 @@ def find_intensities(meta, station, intensities, dir_data="./"):
         df_ext = df_ext.sort_values(by="intensity", ascending=False)
     return df_ext
 
-#
-# def find_higher_than_or_equal_to_6(meta, station, dir_data="./"):
-#     available = find_available_periods(meta, station)
-#     stations = available["station"]
-#     df_sub_s = []
-#     df_sub_7s = []
-#     for station in stations:
-#         filename = dir_data + "st_" + str(station) + ".txt"
-#         df = pd.read_csv(filename)
-#         df["intensity"] = df["intensity"].astype(str)
-#         intensities = ["D", "C", "6"]
-#         for intensity in intensities:
-#             idx = df.index[df["intensity"] == intensity]
-#             df_sub = df.loc[idx]
-#             if df_sub is not None:
-#                 if not df_sub.empty:
-#                     df_sub_s.append(df_sub)
-#         idx = df.index[df["intensity"] == "7"]
-#         df_sub_7 = df.loc[idx]
-#         if not df_sub_7.empty:
-#             df_sub_7s.append(df_sub_7)
-#     df_ext = None
-#     if len(df_sub_s) != 0:
-#         df_ext = pd.concat(df_sub_s, axis=0)
-#         df_ext = df_ext.sort_values(by="intensity", ascending=False)
-#     if len(df_sub_7s) != 0:
-#         df_ext = pd.condat([*df_sub_7s, df_ext], axis=0)
-#     return df_ext
-
-
-def find_higher_than_or_equal_to_5(meta, station, dir_data="./"):
-    available = find_available_periods(meta, station)
-    stations = available["station"]
-    dfsubs = []
-    dfsub7s = []
-    for station in stations:
-        filename = dir_data + "st_" + str(station) + ".txt"
-        df = pd.read_csv(filename)
-        df["intensity"] = df["intensity"].astype(str)
-        intensities = ["D", "C", "B", "A", "6", "5"]
-        for intensity in intensities:
-            idx = df.index[df["intensity"] == intensity]
-            df_sub = df.loc[idx]
-            if not df_sub.empty:
-                dfsubs.append(df_sub)
-        idx = df.index[df["intensity"] == "7"]
-        df_sub_7 = df.loc[idx]
-        if not df_sub_7.empty:
-            dfsub7s.append(df_sub_7)
-    df_ext = pd.concat(dfsubs, axis=0)
-    df_ext = df_ext.sort_values(by="intensity", ascending=False)
-    if dfsub7s is not []:
-        df_ext = pd.concat([*dfsub7s, df_ext], axis=0)
-    # print(available)
-    # print(df_ext)
-    return df_ext
 
 
 ################################################################################
