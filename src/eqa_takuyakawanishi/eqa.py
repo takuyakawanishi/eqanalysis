@@ -92,6 +92,7 @@ def find_available_periods(meta, station):
     meta_1 = meta[meta["code_prime"] == station]
     meta_1 = meta_1.reset_index(drop=True)
     dfsp = pd.DataFrame(columns=["station", "from", "to"])
+    # print(meta_1)
     dfsp["station"] = eval(meta_1.at[0, "codes_ordered"])
     dfsp["from"] = eval(meta_1.at[0, "date_b_s"])
     dfsp["to"] = eval(meta_1.at[0, "date_e_s"])
@@ -296,7 +297,82 @@ def find_intensity_frequency_regression_summarize(
 #   Find high intensity earthquakes
 ################################################################################
 
-def find_highest(meta, station, dir_data="./"):
+
+
+def extract_quakes_by_intensities(
+        meta, intensities, dir_data):
+    codes = list(meta["code_prime"])
+    count = 0
+    dfs = None
+    for i_code, code in enumerate(codes):
+        df = None
+        try:
+            df = eqa.find_intensities(
+                meta, code, intensities, dir_data=dir_data)
+            df["code_prime"] = code
+        except Exception as ex:
+            print(ex)
+        if df is not None:
+            if not df.empty:
+                if count == 0:
+                    dfs = df
+                    count += 1
+                else:
+                    dfs = pd.concat([dfs, df], axis=0)
+    return dfs
+
+
+def find_intensities(meta, station, intensities, dir_data="./"):
+    available = find_available_periods(meta, station)
+    stations = available["station"]
+    df_sub_s = []
+    for station in stations:
+        filename = dir_data + "st_" + str(station) + ".txt"
+        df = pd.read_csv(filename)
+        df["intensity"] = df["intensity"].astype(str)
+        for intensity in intensities:
+            idx = df.index[df["intensity"] == intensity]
+            df_sub = df.loc[idx]
+            if df_sub is not None:
+                if not df_sub.empty:
+                    df_sub_s.append(df_sub)
+    df_ext = None
+    if len(df_sub_s) != 0:
+        df_ext = pd.concat(df_sub_s, axis=0)
+        df_ext = df_ext.sort_values(by="intensity", ascending=False)
+    return df_ext
+
+#
+# def find_higher_than_or_equal_to_6(meta, station, dir_data="./"):
+#     available = find_available_periods(meta, station)
+#     stations = available["station"]
+#     df_sub_s = []
+#     df_sub_7s = []
+#     for station in stations:
+#         filename = dir_data + "st_" + str(station) + ".txt"
+#         df = pd.read_csv(filename)
+#         df["intensity"] = df["intensity"].astype(str)
+#         intensities = ["D", "C", "6"]
+#         for intensity in intensities:
+#             idx = df.index[df["intensity"] == intensity]
+#             df_sub = df.loc[idx]
+#             if df_sub is not None:
+#                 if not df_sub.empty:
+#                     df_sub_s.append(df_sub)
+#         idx = df.index[df["intensity"] == "7"]
+#         df_sub_7 = df.loc[idx]
+#         if not df_sub_7.empty:
+#             df_sub_7s.append(df_sub_7)
+#     df_ext = None
+#     if len(df_sub_s) != 0:
+#         df_ext = pd.concat(df_sub_s, axis=0)
+#         df_ext = df_ext.sort_values(by="intensity", ascending=False)
+#     if len(df_sub_7s) != 0:
+#         df_ext = pd.condat([*df_sub_7s, df_ext], axis=0)
+#     return df_ext
+
+
+def find_higher_than_or_equal_to_5(meta, station, dir_data="./"):
     available = find_available_periods(meta, station)
     stations = available["station"]
     dfsubs = []

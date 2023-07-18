@@ -15,8 +15,10 @@ class TestEqaForOrganized(unittest.TestCase):
         meta["date_e_s"].astype("object")
         meta.loc[0, "code_prime"] = 1000
         meta.at[0, "codes_ordered"] = str([1000, 1001, 1002])
-        meta.loc[0, "date_b_s"] = str(["1996-04-01", "2000-12-18", "2008-01-01"])
-        meta.loc[0, "date_e_s"] = str(["2000-11-30", "2008-01-01", "2023-12-31"])
+        meta.loc[0, "date_b_s"] = str(
+            ["1996-04-01", "2000-12-18", "2008-01-01"])
+        meta.loc[0, "date_e_s"] = str(
+            ["2000-11-30", "2008-01-01", "2023-12-31"])
         # print(meta["codes_ordered"])
         res = eqa.find_available_periods(meta, 1000)
         expected = pd.DataFrame(columns=["station", "from", "to"])
@@ -237,6 +239,10 @@ class TestEqaForOrganized(unittest.TestCase):
             expected_res_res_pvalue_stderr_intercept_stderr,
             decimal=6)
         pd.testing.assert_series_equal(res_summary, expected_summary)
+
+
+# def test_find_highest(self):
+
 
 
 class MyTestCase(unittest.TestCase):

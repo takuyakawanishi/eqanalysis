@@ -11,7 +11,7 @@ def main():
     dir_data = "../../../data/stationwise_fine_old_until_2019/"
     meta = pd.read_csv(filename)
     station = 2502330
-    res = eqa.find_highest(meta, station, dir_data=dir_data)
+    res = eqa.find_higher_than_or_equal_to_5(meta, station, dir_data=dir_data)
 
 
 if __name__ == '__main__':
