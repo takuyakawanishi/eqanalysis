@@ -56,6 +56,8 @@ def station_yearly(station, year, directory='./'):
                 df.at[count, 'day'] = linecontent[8:10]
                 df.at[count, 'hour'] = linecontent[10:12]
                 df.at[count, 'minute'] = linecontent[12:14]
+                df.at[count, 'second'] = linecontent[14:16] + '.' + \
+                    linecontent[17]
                 df.at[count, 'intensity_equip'] = linecontent[20:22]
                 df.at[count, 'acceleration_max_comb'] = linecontent[29:34]
                 count += 1
@@ -72,7 +74,7 @@ def main():
     # codes = [1000000, 1000001]
     # print(codes)
     for i_code, code in enumerate(codes):
-        if code > 3400000:
+        if code > 0:
             print('Now extracting for station {}'.format(code))
             df = station_years(code, directory=directory_read)
             file2write = directory_write + 'st_' + str(code) + '.txt'

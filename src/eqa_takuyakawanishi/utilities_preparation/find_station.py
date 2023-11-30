@@ -11,10 +11,12 @@ def main():
     meta = pd.read_csv(file2read_meta)
     codes = list(meta["code_prime"])
     stations_having_int_D = []
+    stations_having_int_7 = []
     for i_code, code in enumerate(codes):
         idx = meta.index[meta["code_prime"] == code]
         stations = eval(meta.loc[idx, "codes_ordered"].values[0])
         add = False
+        add_7 = False
         for station in stations:
             try:
                 df = pd.read_csv(dir_data + 'st_' + str(station) + '.txt')
@@ -25,9 +27,14 @@ def main():
             intensities = df["intensity"].values
             if "D" in intensities:
                 add = True
+            if "7" in intensities:
+                add_7 = True
         if add:
             stations_having_int_D.append(code)
+        if add_7:
+            stations_having_int_7.append(code)
 
+    print(stations_having_int_7)
     print(stations_having_int_D)
     print(len(stations_having_int_D))
 

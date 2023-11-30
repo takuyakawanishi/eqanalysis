@@ -143,12 +143,12 @@ class DashSettings(FigSettings):
             dbc.Container([
                 dbc.Row([
                     dbc.Col([
-                        html.Div(["EXAnalytics"],
-                        style={'color': '#eee', 'font-family': 'Georgia',
+                        html.Div(["EXAnalytics"],  # cc144f
+                        style={'color': '#cc8b00', 'font-family': 'Georgia',
                                'font-size': '24px',
                                'padding-top': '4px', 'padding-bottom': '4px',
                                'margin': 0}),
-                    ], width={'size': 10}, sm=8, md=6, lg=4, xxl=3),
+                    ], width={'size': 12}, sm=8, md=6, lg=4, xxl=3),
                     dbc.Col([
                         html.Div([title], style={
                             "color": "#eee", "font-family": "Georgia",

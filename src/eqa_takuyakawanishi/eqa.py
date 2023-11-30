@@ -17,7 +17,11 @@ class Settings:
 
     def __init__(self):
         self.date_beginning = '1919-01-01'
-        self.date_end = '2019-12-31'
+        self.date_end = '2020-12-31'
+        self.datetime_beginning = "1919-01-01 12:00:00"
+        dt_now = datetime.datetime.now()
+        self.datetime_end = datetime.datetime.strftime(
+            dt_now, "%Y-%m-%d %H:%M:%S")
         self.duration_min = 5
         self.remiflt = {
             '1': 7, '2': 10, '3': 32, '4': 46, '5': 46, '6': 46, '7': 46
@@ -57,6 +61,8 @@ class Settings:
             return "$\\log_{10}(\\hat{N}(7)/T)$"
         elif self.contour_to_draw == 'est6':
             return "$\\log_{10}(\\hat{N}(6)/T)$"
+        elif self.contour_to_draw == "est6p5":
+            return "$\\log_{10}(\\hat{N}(6.5)/T)$"
         elif self.contour_to_draw == 'freq3':
             return "$\\log_{10}(N(3)/T)$"
         elif self.contour_to_draw == 'freq2':
@@ -73,6 +79,7 @@ def round_to_k(x, k):
     return round(x, -int(np.floor(np.log10(abs(x)))) - 1 + k)
 
 
+# The following is from
 # https://towardsdatascience.com/dealing-with-list-values-in-pandas-dataframes-a177e534f173
 def clean_alt_list(list_):
     list_ = list_.replace(', ', '","')
@@ -92,7 +99,6 @@ def find_available_periods(meta, station):
     meta_1 = meta[meta["code_prime"] == station]
     meta_1 = meta_1.reset_index(drop=True)
     dfsp = pd.DataFrame(columns=["station", "from", "to"])
-    # print(meta_1)
     dfsp["station"] = eval(meta_1.at[0, "codes_ordered"])
     dfsp["from"] = eval(meta_1.at[0, "date_b_s"])
     dfsp["to"] = eval(meta_1.at[0, "date_e_s"])
@@ -219,6 +225,7 @@ def find_regression_int_freq(frequency):
     res = None
     est7 = None
     est6 = None
+    est6p5 = None
     try:
         res = scipy.stats.linregress(ints[1:], lfreq[1:])
     except Exception as ex:
@@ -226,7 +233,8 @@ def find_regression_int_freq(frequency):
     else:
         est7 = 10 ** (res.intercept + res.slope * 7)
         est6 = 10 ** (res.intercept + res.slope * 6)
-    return res, est7, est6
+        est6p5 = 10 ** (res.intercept + res.slope * 6.5)
+    return res, est7, est6, est6p5
 
 
 def find_intensity_frequency_regression_summarize(
@@ -241,16 +249,254 @@ def find_intensity_frequency_regression_summarize(
     summary["intercept"] = np.nan
     summary["rvalue"] = np.nan
     summary["est7"] = np.nan
+    summary["est6p5"] = np.nan
     summary["est6"] = np.nan
     regression = None
     if len(frequency) > 2:
-        regression, est7, est6 = find_regression_int_freq(frequency)
+        regression, est7, est6, est6p5 = find_regression_int_freq(frequency)
         summary["slope"] = np.round(regression.slope, 3)
         summary["intercept"] = np.round(regression.intercept, 3)
         summary["rvalue"] = np.round(regression.rvalue, 3)
         summary["est7"] = round_to_k(est7, 3)
         summary["est6"] = round_to_k(est6, 3)
+        summary["est6p5"] = round_to_k(est6p5, 3)
     return frequency, regression, summary
+
+
+################################################################################
+#    Considering the time up to seconds
+################################################################################
+
+
+def find_available_periods_ts(meta, station):
+    meta_1 = meta[meta["code_prime"] == station]
+    meta_1 = meta_1.reset_index(drop=True)
+    dfsp = pd.DataFrame(columns=["station", "from", "to"])
+    dfsp["station"] = eval(meta_1.at[0, "codes_ordered"])
+    dfsp["from"] = eval(meta_1.at[0, "datetime_b_s"])
+    dfsp["to"] = eval(meta_1.at[0, "datetime_e_s"])
+    return dfsp
+
+
+def calc_periods_intersection_ts(period_0, period_1):
+    try:
+        b_0 = datetime.datetime.strptime(period_0[0], "%Y-%m-%d %H:%M:%S")
+        e_0 = datetime.datetime.strptime(period_0[1], "%Y-%m-%d %H:%M:%S")
+        b_1 = datetime.datetime.strptime(period_1[0], "%Y-%m-%d %H:%M:%S")
+        e_1 = datetime.datetime.strptime(period_1[1], "%Y-%m-%d %H:%M:%S")
+    except Exception as ex:
+        # print(ex)
+        b = np.nan
+        e = np.nan
+    else:
+        b = max(b_0, b_1)
+        e = min(e_0, e_1)
+    if b > e:
+        b = np.nan
+        e = np.nan
+    return b, e
+
+
+def calc_periods_durations_ts(df_available, set_period):
+    available_periods = df_available[["from", "to"]].values.tolist()
+    set_period = list(set_period.values())
+    periods_durations = []
+    for period in available_periods:
+        b, e = calc_periods_intersection_ts(set_period, period)
+        duration = 0
+        b_str = ""
+        e_str = ""
+        if isinstance(b, datetime.datetime):
+            duration = (e - b).days
+            b_str = datetime.datetime.strftime(b, "%Y-%m-%d %H:%M:%S")
+            e_str = datetime.datetime.strftime(e, "%Y-%m-%d %H:%M:%S")
+        periods_durations.append([b_str, e_str, duration])
+    df = pd.DataFrame(periods_durations, columns=["from", "to", "duration"])
+    df["station"] = df_available["station"]
+    df = df[["station", "from", "to", "duration"]]
+    return df
+
+
+def add_datetime_column_to_dataframe(df):
+    df = df.drop(df[df.day == "  "].index)
+    df = df.drop(df[df.day == '00'].index)
+    df.loc[df['day'] == '//', 'day'] = '15'
+    df.loc[df['hour'] == '//', 'hour'] = 12
+    df.loc[df['minute'] == '//', 'minute'] = 0
+    df.loc[df['second'] == '//. ', 'second'] = 0
+    df['date_time'] = pd.to_datetime(
+        df[['year', 'month', 'day', 'hour', 'minute', 'second']])
+    return df
+
+
+def take_data_subset_by_period_ts(station, datetime_b, datetime_e, dir_data):
+    try:
+        df = pd.read_csv(dir_data + 'st_' + str(station) + '.txt')
+    except Exception as ex:
+        df = None
+        print(ex, " at ", station)
+    else:
+        date_b = datetime.datetime.strptime(datetime_b, "%Y-%m-%d %H:%M:%S")
+        date_e = datetime.datetime.strptime(datetime_e, "%Y-%m-%d %H:%M:%S")
+        df = add_datetime_column_to_dataframe(df)
+        df = df[(df["date_time"] >= date_b) & (df["date_time"] <= date_e)]
+    return df
+
+
+def create_intensity_frequency_table_of_period_ts(actual, dir_data='./'):
+    columns = ["int1", "int2", "int3", "int4", "int5", "int6", "int7"]
+    stations = actual["station"].values
+    cum_counts_s = []
+    for i_station, station in enumerate(stations):
+        if actual.at[i_station, "duration"] == 0:
+            cum_counts = np.zeros(7)
+        else:
+            date_b = actual.at[i_station, "from"]
+            date_e = actual.at[i_station, "to"]
+            df = take_data_subset_by_period_ts(
+                station, date_b, date_e, dir_data)
+            if df is not None:
+                cum_counts = count_intensity_in_dataframe(df)
+            else:
+                cum_counts = np.zeros(7)
+        cum_counts_s.append(cum_counts)
+    df_c = pd.DataFrame(cum_counts_s, columns=columns)
+    actual_res = pd.concat([actual, df_c], axis=1)
+    actual_res_sum = actual_res.sum()
+    actual_res_sum["station"] = actual_res.at[0, "station"]
+    duration = actual_res_sum["duration"]
+    frequency = actual_res_sum[columns]
+    frequency = frequency[frequency > 0] / duration * 365.2425
+    return frequency, actual_res_sum
+
+
+def find_intensity_frequency_regression_summarize_ts(
+        meta, station, set_dict, dir_data='./'):
+    available = find_available_periods_ts(meta, station)
+    actual = calc_periods_durations_ts(available, set_dict)
+    frequency, summary = \
+        create_intensity_frequency_table_of_period_ts(actual, dir_data)
+    summary["from"] = summary["from"][:10]
+    summary["to"] = summary["to"][-10:]
+    summary["slope"] = np.nan
+    summary["intercept"] = np.nan
+    summary["rvalue"] = np.nan
+    summary["est7"] = np.nan
+    summary["est6p5"] = np.nan
+    summary["est6"] = np.nan
+    regression = None
+    if len(frequency) > 2:
+        regression, est7, est6, est6p5 = find_regression_int_freq(frequency)
+        summary["slope"] = np.round(regression.slope, 3)
+        summary["intercept"] = np.round(regression.intercept, 3)
+        summary["rvalue"] = np.round(regression.rvalue, 3)
+        summary["est7"] = round_to_k(est7, 3)
+        summary["est6"] = round_to_k(est6, 3)
+        summary["est6p5"] = round_to_k(est6p5, 3)
+    return frequency, regression, summary
+
+
+def find_datetime_beginning(code, num_from, datetime_beginning, dir_data='./'):
+    datetime_beginning = datetime.datetime.strptime(
+        datetime_beginning, "%Y-%m-%d %H:%M:%S")
+    str_from = str(num_from)
+    year = str_from[0:4]
+    month = str_from[4:6]
+    day = str_from[6:8]
+    hour = str_from[8:10]
+    minute = str_from[10:12]
+    if year == '9999':
+        stationwise_from, _ = find_operation_period_from_station_wise_data_ts(
+            code, dir_data)
+        datetime_beginning_read = datetime.datetime.strptime(
+            stationwise_from, "%Y-%m-%d %H:%M:%S")
+    else:
+        if month == '99':
+            month = '01'
+        if day == '99':
+            day = '01'
+        if hour == '99':
+            hour = '12'
+        if minute == '99':
+            minute = '00'
+        year = int(year)
+        month = int(month)
+        day = int(day)
+        hour = int(hour)
+        minute = int(minute)
+        datetime_beginning_read = datetime.datetime(
+            year, month, day, hour, minute, 0)
+    if datetime_beginning_read > datetime_beginning:
+        datetime_beginning = datetime_beginning_read
+    return datetime_beginning
+
+
+def find_datetime_end(code, to, datetime_end, dir_data='./'):
+    datetime_end = datetime.datetime.strptime(
+        datetime_end, "%Y-%m-%d %H:%M:%S")
+    if np.isnan(to):
+        return datetime_end
+    else:
+        str_to = str(to)
+        year = str_to[:4]
+        month = str_to[4:6]
+        day = str_to[6:8]
+        hour = str_to[8:10]
+        minute = str_to[10:12]
+    if year == '9999':
+        _, end = find_operation_period_from_station_wise_data_ts(code, dir_data)
+        datetime_end_read = datetime.datetime.strptime(end, "%Y-%m-%d %H:%M:%S")
+    else:
+        if month == '99':
+            month = '12'
+        if day == '99':
+            day = '28'
+        if hour == '99':
+            hour = '23'
+        if minute == '99':
+            minute = '59'
+        year = int(year)
+        month = int(month)
+        day = int(day)
+        hour = int(hour)
+        minute = int(minute)
+        datetime_end_read = datetime.datetime(year, month, day, hour, minute, 0)
+    if datetime_end_read < datetime_end:
+        datetime_end = datetime_end_read
+    return datetime_end
+
+
+def find_operation_period_from_station_wise_data_ts(code, dir_data):
+    fn = dir_data + 'st_' + str(code) + '.txt'
+    df = pd.read_csv(fn)
+    beginning = str(df['year'].min()) + '-01-01 12:00:00'
+    end = str(df['year'].max()) + '-12-31 23:59:59'
+    return beginning, end
+
+
+def calc_datetime_b_datetime_e_duration(
+        meta_in, date_beginning, date_end, dir_data='./'):
+    meta = meta_in.copy()
+    codes = list(meta['code'])
+    for i_code, code in enumerate(codes):
+        date_b = find_datetime_beginning(
+            code, meta.at[i_code, 'from'], date_beginning, dir_data)
+        date_e = find_datetime_end(
+            code, meta.at[i_code, 'to'], date_end, dir_data)
+        meta.at[i_code, 'datetime_b'] = date_b
+        meta.at[i_code, 'datetime_e'] = date_e
+        meta.at[i_code, 'duration_ts'] = (date_e - date_b).days / 365.2425
+    return meta
+
+#
+# def read_12digit_datetime(dt12):
+#     dt12 = dt12
+#     year = dt12[:4]
+#     month = dt12[4:6]
+#     day = dt12[6:8]
+#     hour = dt12[8:10]
+#     minute = dt12[10:12]
+#     return datetime.datetime(year, month, day, hour, minute, 0)
 
 
 ################################################################################
@@ -266,7 +512,7 @@ def extract_quakes_by_intensities(
     for i_code, code in enumerate(codes):
         df = None
         try:
-            df = eqa.find_intensities(
+            df = find_intensities(
                 meta, code, intensities, dir_data=dir_data)
             df["code_prime"] = code
         except Exception as ex:
@@ -302,18 +548,6 @@ def find_intensities(meta, station, intensities, dir_data="./"):
     return df_ext
 
 
-
-################################################################################
-#   Partial validation: find highest intensity i and evaluate the
-#   probability that i+1 does not occur.
-################################################################################
-
-
-################################################################################
-#   Screening
-################################################################################
-
-
 def screening_stations(meta, cond_dict, set_dict, dir_data='./'):
     codes = meta["code_prime"].values
     n_code = len(codes)
@@ -344,30 +578,6 @@ def screening_stations(meta, cond_dict, set_dict, dir_data='./'):
         [satisfied, est7s, est6s], columns=["satisfied", "est7", "est6"])
     print(summary)
     return summary
-
-
-# def find_available_periods_new(meta, station):
-#     meta_1 = meta[meta["code_prime"] == station]
-#     meta_1 = meta_1.reset_index(drop=True)
-#     dfsp = pd.DataFrame(columns=["station", "from", "to"])
-#     list_codes_ordered = clean_alt_list(str(meta_1.at[0, "codes_ordered"]))
-#     list_froms = clean_alt_list(str(meta_1.at[0, "date_b_s"]))
-#     list_tos = clean_alt_list(str(meta_1.at[0, "date_e_s"]))
-#     print(list_codes_ordered)
-#     dfsp["station"] = eval(list_codes_ordered)
-#     dfsp["from"] = eval(str(meta_1.at[0, "date_b_s"]))
-#     dfsp["to"] = eval(str(meta_1.at[0, "date_e_s"]))
-#     print(dfsp)
-#     return dfsp
-
-#
-#   ToDo: Check if we can remove the following.
-#
-
-# def find_analyzed_periods(available_dict, set_dict):
-#     available = pd.DataFrame.from_dict(available_dict)
-#     df = calc_periods_durations(available, set_dict)
-#     return df
 
 
 ################################################################################
@@ -655,6 +865,15 @@ def calc_regression_intervals(dfis, reg_thres, upto=5):
 #   Longitude, Latitude
 ################################################################################
 
+def calc_latitude(lat):
+    lat = str(lat)
+    return eval(lat[:2]) + eval(lat[2:4]) / 60
+
+
+def calc_longitude(lon):
+    lon = str(lon)
+    return eval(lon[:3]) + eval(lon[3:5])
+
 def calc_latlon(meta):
     temp = meta.loc[:, ['lat', 'lon']]
     temp['lats'] = temp['lat'].apply(str)
@@ -838,8 +1057,6 @@ def find_having_int_6(meta, dir_data):
     return having_int_7
 
 
-
-
 ################################################################################
 #   Utilities
 ################################################################################
@@ -1003,11 +1220,21 @@ def draw_contour(meta, col, minus=True, log_scale=True, cmap='Reds',
     ax.set_extent([lon_min, lon_max, lat_min, lat_max])
     latitude = meta['latitude']
     longitude = meta['longitude']
-    val = meta[col]
+    values_col = np.array(meta[col])
     if minus:
-        val = - val
+        vala = - values_col[values_col < 0]
+        vala = vala.astype(np.float64)
+    else:
+        # meta = meta[meta[col] > 0]
+        vala = values_col[values_col > 0]
+        vala = vala.astype(np.float64)
+    # print(vala)
+    # for i in range(len(vala)):
+    #     if vala[i] <= 0:
+    #         print("val is zero at {}".format(i))
+    # print("type of vala", type(vala))
     if log_scale:
-        val = meta[col].apply(np.log10)
+        val = np.log10(vala)
     if lmax is not None:
         val_max = lmax
     else:

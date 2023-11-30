@@ -1,0 +1,4 @@
+station,intensity,year,month,day,hour,minute,second,intensity_equip,acceleration_max_comb
+7780970,2,2012,12,03,23,29,45. ,15,00068
+7780970,1,2012,12,16,06,02,21. ,06,00023
+7780970,2,2013,01,05,13,12,21. ,16,00051

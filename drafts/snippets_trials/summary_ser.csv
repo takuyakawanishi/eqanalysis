@@ -1,0 +1,17 @@
+,0
+station,8070070
+from,1954-01-01
+to,2020-12-31
+duration,24471
+int1,3608.0
+int2,1406.0
+int3,342.0
+int4,75.0
+int5,9.0
+int6,0.0
+int7,0.0
+slope,-0.724
+intercept,2.836
+rvalue,-0.995
+est7,0.00586
+est6,0.031

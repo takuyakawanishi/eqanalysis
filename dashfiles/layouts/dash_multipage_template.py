@@ -16,15 +16,15 @@ PLOTLY_LOGO = "https://images.plot.ly/logo/new-branding/plotly-logomark.png"
 
 cff = fig_template.FigSettings()
 cfd = fig_template.DashSettings()
-app = Dash(__name__, use_pages=True)  # external_stylesheets=[dbc.themes.BOOTSTRAP]
-#)
+app = Dash(__name__, use_pages=True, external_stylesheets=[dbc.themes.BOOTSTRAP]
+)
 app.layout = dbc.Container([
     cfd.titlebar("Demo, Multi-page application"),
     dbc.Container([
         dbc.Container([
             dbc.Row([
                 dbc.Col([
-                ], width={'size': 10}, sm=8, md=6, lg=4, xxl=3),
+                ], width={'size': 12}, sm=8, md=6, lg=4, xxl=3),
                 dbc.Col([
                     html.Ul([
                         html.Li([
@@ -56,10 +56,12 @@ app.layout = dbc.Container([
                         })
                     ], style={"min-height": "1rem", "padding": 0,
                               "font-family": "Helvetica"}),
-                 ], width={'size': 12}, lg=8, xxl=9)
+                ], width={'size': 12}, lg=8, xl=7, xxl=6),
+                dbc.Col([
+                ], width={"size": 12}, xl=1, xxl=3)
             ])
         ], fluid=False),
-    ], fluid=False, style={
+    ], fluid=True, style={
         'min-width': '100vw',
         'background-color': '#192f60',
         'margin-left': '-12px', 'margin-right': '-12px'}

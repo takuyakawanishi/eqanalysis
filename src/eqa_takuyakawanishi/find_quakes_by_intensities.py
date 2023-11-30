@@ -8,7 +8,8 @@ def main():
     dir_data = "../../data/stationwise/"
     file2read = "../../intermediates/organized_codes_pre_02.csv"
     meta = pd.read_csv(file2read)
-    intensities = ["D", "C", "7"]
+    intensities = ["D", "C", "B", "A", "7", "6", "5"]
+    intensities = ["D"]
     str = ""
     for intensity in intensities:
         str = str + intensity

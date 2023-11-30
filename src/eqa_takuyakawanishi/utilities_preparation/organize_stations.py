@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import src.eqa_takuyakawanishi.eqa as eqa
 import sys
+import time
 
 
 def calc_latron(lon, lat):
@@ -89,10 +90,19 @@ def find_kyu_index_and_combine_them(df_sll, cfg, dir_data):
             print(df)
             print(ex)
         df = df.reset_index(drop=True)
-        df = eqa.calc_date_b_date_e_duration(
-            df, cfg.date_beginning, cfg.date_end, dir_data=dir_data)
-        df["date_b_str"] = df["date_b"].dt.strftime("%Y-%m-%d")
-        df["date_e_str"] = df["date_e"].dt.strftime("%Y-%m-%d")
+        # print(df["from"])
+        # df = eqa.calc_date_b_date_e_duration(
+        #     df, cfg.date_beginning, cfg.date_end, dir_data=dir_data)
+        df = eqa.calc_datetime_b_datetime_e_duration(
+            df, cfg.datetime_beginning, cfg.datetime_end, dir_data=dir_data)
+        df["date_b"] = df["datetime_b"].dt.date
+        df["date_e"] = df["datetime_e"].dt.date
+        # print(df["date_b"].head(4))
+        # print(type(df.at[0, "date_b"]))
+        df["date_b_str"] = pd.to_datetime(df["date_b"]).dt.strftime("%Y-%m-%d")
+        df["date_e_str"] = pd.to_datetime(df["date_e"]).dt.strftime("%Y-%m-%d")
+        df["datetime_b_str"] = df["datetime_b"].dt.strftime("%Y-%m-%d %H:%M:%S")
+        df["datetime_e_str"] = df["datetime_e"].dt.strftime("%Y-%m-%d %H:%M:%S")
         dfs.append(df)
     return dfs
 
@@ -101,7 +111,8 @@ def create_organized_meta_file(meta, dfs):
     dfg = pd.DataFrame(columns=[
         "code_prime", "lon", "lat", "address", "codes_ordered", "gaps",
         "distances", "grand_date_b", "grand_date_e", "date_b_s", "date_e_s",
-        "lats", "lons", "date_b_s_old", "date_e_s_old"
+        "lats", "lons", "datetime_b_s", "datetime_e_s",
+        "date_b_s_old", "date_e_s_old"
     ])
     dfg["codes_ordered"] = dfg["codes_ordered"].astype('object')
     dfg["gaps"] = dfg["gaps"].astype('object')
@@ -111,6 +122,8 @@ def create_organized_meta_file(meta, dfs):
     dfg["date_e_s_old"] = dfg["date_e_s_old"].astype('object')
     dfg["lats"] = dfg["lats"].astype('object')
     dfg["lons"] = dfg["lons"].astype('object')
+    dfg["datetime_b_s"] = dfg["datetime_b_s"].astype('object')
+    dfg["datetime_e_s"] = dfg["datetime_e_s"].astype('object')
     dfg["distances"] = dfg["distances"].astype('object')
     for i_df, df in enumerate(dfs):
         n = len(df)
@@ -123,6 +136,8 @@ def create_organized_meta_file(meta, dfs):
         dfg.at[i_df, "codes_ordered"] = codes
         dfg.at[i_df, "date_b_s"] = list(df["date_b_str"])
         dfg.at[i_df, "date_e_s"] = list(df["date_e_str"])
+        dfg.at[i_df, "datetime_b_s"] = list(df["datetime_b_str"])
+        dfg.at[i_df, "datetime_e_s"] = list(df["datetime_e_str"])
         dfg.at[i_df, "grand_date_b"] = df.at[0, "date_b_str"]
         dfg.at[i_df, "grand_date_e"] = df.at[n-1, "date_e_str"]
         dfg.at[i_df, "lats"] = list(df["lat"])
@@ -131,12 +146,11 @@ def create_organized_meta_file(meta, dfs):
         distances = []
         if n > 1:
             distances = calc_distances_in_group(meta, codes)
-            for i in range(n-1):
-                dltt = df.at[i+1, "date_b"] - df.at[i, "date_e"]
-                gaps.append(dltt / np.timedelta64(1, "D"))
+            for i in range(n - 1):
+                dlt_t = df.at[i + 1, "datetime_b"] - df.at[i, "datetime_e"]
+                gaps.append(np.round(dlt_t.days, 2))
         dfg.at[i_df, "gaps"] = gaps
         dfg.at[i_df, "distances"] = distances
-    # dfg["code_prime"] = dfg["code_prime"].round(decimals=0).astype(np.int64)
     dfg = dfg.sort_values("code_prime")
     dfg = dfg.reset_index(drop=True)
     return dfg

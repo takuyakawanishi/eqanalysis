@@ -18,7 +18,7 @@ import dashfiles.layouts.fig_template as fig_template
 DATABASE_START_DATE = '19190101'
 DATABASE_END_DATE = '20191231'
 DIR_DATA = '../../data/stationwise_fine_old_until_2019/'
-FILE2READ_META = '../../intermediates/organized_codes.csv'
+FILE2READ_META = '../../intermediates/organized_codes_pre_02.csv'
 
 
 ################################################################################

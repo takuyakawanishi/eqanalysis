@@ -283,15 +283,17 @@ def setting_the_analysis_period_for_third_one(sy, sm, sd, ey, em, ed):
 def display_high_intensity_quakes(station_dict):
     station_meta = pd.DataFrame.from_dict(station_dict)
     station = station_meta.at[0, "code_prime"]
-    highest_quakes = eqa.find_higher_than_or_equal_to_5(meta, station, dir_data=DIR_DATA)
+    intensities = ["7", "D", "C", "6", "B", "A", "5"]
+    highest_quakes = eqa.extract_quakes_by_intensities(
+        station_meta, intensities, dir_data=DIR_DATA)
     highest_quakes_dict = highest_quakes.to_dict("records")
-    disp_heighest_quakes = html.Div([
+    display_highest_quakes = html.Div([
         dash_table.DataTable(
             data=highest_quakes_dict,
             columns=[{'name': i, 'id': i} for i in highest_quakes.columns]),
     ])
     print(station_meta.at[0, "code_prime"])
-    return disp_heighest_quakes
+    return display_highest_quakes
 
 
 @app.callback(

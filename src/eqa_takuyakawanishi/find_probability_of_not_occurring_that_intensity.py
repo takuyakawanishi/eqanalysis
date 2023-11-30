@@ -9,7 +9,7 @@ def main():
     dir_data = "../../data/stationwise/"
     meta2read = "../../intermediates/organized_codes_pre_02.csv"
     meta = pd.read_csv(meta2read)
-    file2read = "../../intermediates/intensity_D.csv"
+    file2read = "../../intermediates/intensity_DCBA765.csv"
     df = pd.read_csv(file2read)
     print(df)
     pno_s =[]

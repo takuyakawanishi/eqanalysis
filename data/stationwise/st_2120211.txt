@@ -1,0 +1,4 @@
+station,intensity,year,month,day,hour,minute,second,intensity_equip,acceleration_max_comb
+2120211,1,2010,03,01,07,08,07. ,12,00033
+2120211,1,2010,03,13,21,47,32. ,09,00021
+2120211,2,2010,03,14,17,08,43. ,22,00070
