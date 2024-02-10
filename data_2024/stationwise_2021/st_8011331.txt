@@ -1,0 +1,2 @@
+station,intensity,year,month,day,hour,minute,second,intensity_equip,acceleration_max_comb
+8011331,1,2021,12,08,08,14,31. ,07,00036

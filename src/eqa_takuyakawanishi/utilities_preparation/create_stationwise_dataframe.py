@@ -1,27 +1,22 @@
 import numpy as np
 import pandas as pd
+import os
+import sys
 
-
-def station_years(
-        station, year_b=1919, year_e=2020,
-        directory='./'):
-    """ Return the DataFrame of stationwise records of earthquakes from
-        year_b to year_e
-
+def station_years(station, years, directory='./'):
+    """ Return the DataFrame of stationwise records of earthquakes, 
+        for the years in the list years.
     :param station:
-    :param year_b:
-    :param year_e:
+    :param years: 
+        List of years in the database
     :param directory:
+        Directory of the data files, usually data_unzip
     :return: DataFrame
-        containing station_code, intensity, year, month, day
+        containing station_code, intensity, year, month, day, etc.
     """
-    years = year_b + np.arange(year_e - year_b + 1)
     dfyears = pd.DataFrame()
-    #    columns=['station', 'intensity', 'year', 'month', 'day'])
-    # print(years)
     for year in years:
         res = station_yearly(station, year, directory=directory)
-        # print(res)
         dfyears = pd.concat([dfyears, res])
     dfyears = dfyears.reset_index(drop=True)
     return dfyears
@@ -65,20 +60,32 @@ def station_yearly(station, year, directory='./'):
 
 
 def main():
-    directory_read = '../../../data_download/data_unzip/'
-    directory_write = '../../../data/stationwise/'
-    file2read = "../../../data/code_p_df.csv"
+    directory_read = 'eqanalysis/data_2024/data_unzip/'
+    directory_write = 'eqanalysis/data_2024/stationwise/'
+    file2read = "eqanalysis/data_2024/code_p_20231205_df.csv"
+    #
+    # Find which year's files are in data_unzip
+    #
+    directory_unzip = "eqanalysis/data_2024/data_unzip"
+    listyear = os.listdir(directory_unzip)
+    years = []
+    for iyear_dat in listyear:
+        years.append(int(iyear_dat[1:5]))
+    years.sort()
+    print(years)
+    # sys.exit()
+    #
+    # Find the station codes from code_p
+    #
     dfstations = pd.read_csv(file2read)
     codes = list(dfstations['code'])
     print(len(codes))
-    # codes = [1000000, 1000001]
-    # print(codes)
-    for i_code, code in enumerate(codes):
+
+    for code in codes:
         if code > 0:
             print('Now extracting for station {}'.format(code))
-            df = station_years(code, directory=directory_read)
+            df = station_years(code, years, directory=directory_read)
             file2write = directory_write + 'st_' + str(code) + '.txt'
-            # print('CAUTION, Not saved.')
             df.to_csv(file2write, index=None)
 
 

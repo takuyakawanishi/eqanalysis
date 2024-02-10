@@ -1,0 +1,4 @@
+station,intensity,year,month,day,hour,minute,second,intensity_equip,acceleration_max_comb
+8011533,1,2020,01,16,18,36,26. ,09,00047
+8011533,1,2020,09,08,11,58,48. ,09,00025
+8011533,2,2021,03,27,07,03,26. ,17,00050

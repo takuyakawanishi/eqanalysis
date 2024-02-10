@@ -1,10 +1,5 @@
-import cartopy.crs as ccrs
-import cartopy.feature as cfeature
 import datetime
 import matplotlib.pyplot as plt
-import matplotlib.cm as cm
-import matplotlib.tri as tri
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 import pandas as pd
 import scipy.stats
@@ -17,7 +12,7 @@ class Settings:
 
     def __init__(self):
         self.date_beginning = '1919-01-01'
-        self.date_end = '2020-12-31'
+        self.date_end = '2100-12-31'
         self.datetime_beginning = "1919-01-01 12:00:00"
         dt_now = datetime.datetime.now()
         self.datetime_end = datetime.datetime.strftime(
@@ -33,43 +28,6 @@ class Settings:
         self.n_int4_min = 1
         self.n_int5_min = 0
         self.n_int6_min = 0
-
-        self.draw_stationwise_figures = False
-        self.regs = pd.DataFrame(columns=['x-ax', 'y-ax', 'minint', 'maxint'])
-        self.reg_raw_show = False
-        self.reg_raw_start = 2
-        self.reg_raw_end = 4
-        self.reg_aas_show = True
-        self.reg_aas_start = 2
-        self.reg_aas_end = 4
-        self.map_include_all_japan_lands = False
-        self.contour_to_draw = 'est7'
-        self.contour_log_scale = True
-        self.contour_cmap = 'Reds'
-        self.contour_lstep = .5
-        self.contour_lmin = None
-        self.contour_lmax = None
-        self.contour_plot_stations = False
-        self.contour_station_size = 1
-        self.contour_station_alpha = 1.
-        self.contour_colorbartitle = self.create_colorbar_title()
-
-    def create_colorbar_title(self):
-        if self.contour_to_draw == 'slope':
-            return "$\\mathrm{slope}$"
-        elif self.contour_to_draw == 'est7':
-            return "$\\log_{10}(\\hat{N}(7)/T)$"
-        elif self.contour_to_draw == 'est6':
-            return "$\\log_{10}(\\hat{N}(6)/T)$"
-        elif self.contour_to_draw == "est6p5":
-            return "$\\log_{10}(\\hat{N}(6.5)/T)$"
-        elif self.contour_to_draw == 'freq3':
-            return "$\\log_{10}(N(3)/T)$"
-        elif self.contour_to_draw == 'freq2':
-            return "$\\log_{10}(N(2)/T)$"
-        else:
-            return ""
-
 
 ################################################################################
 #  Utility
@@ -95,53 +53,58 @@ def clean_alt_list(list_):
 ################################################################################
 
 
-def find_available_periods(meta, station):
-    meta_1 = meta[meta["code_prime"] == station]
-    meta_1 = meta_1.reset_index(drop=True)
-    dfsp = pd.DataFrame(columns=["station", "from", "to"])
-    dfsp["station"] = eval(meta_1.at[0, "codes_ordered"])
-    dfsp["from"] = eval(meta_1.at[0, "date_b_s"])
-    dfsp["to"] = eval(meta_1.at[0, "date_e_s"])
-    return dfsp
+# def find_available_periods(meta, station):
+#     meta_1 = meta[meta["code_prime"] == station]
+#     meta_1 = meta_1.reset_index(drop=True)
+#     dfsp = pd.DataFrame(columns=["station", "from", "to"])
+#     dfsp["station"] = eval(meta_1.at[0, "codes_ordered"])
+#     dfsp["from"] = eval(meta_1.at[0, "date_b_s"])
+#     dfsp["to"] = eval(meta_1.at[0, "date_e_s"])
+#     return dfsp
 
 
-def calc_periods_intersection(period_0, period_1):
-    try:
-        b_0 = datetime.datetime.strptime(period_0[0], "%Y-%m-%d")
-        e_0 = datetime.datetime.strptime(period_0[1], "%Y-%m-%d")
-        b_1 = datetime.datetime.strptime(period_1[0], "%Y-%m-%d")
-        e_1 = datetime.datetime.strptime(period_1[1], "%Y-%m-%d")
-    except Exception as ex:
-        # print(ex)
-        b = np.nan
-        e = np.nan
-    else:
-        b = max(b_0, b_1)
-        e = min(e_0, e_1)
-    if b > e:
-        b = np.nan
-        e = np.nan
-    return b, e
+# def calc_periods_durations(df_available, set_period):
+#     """
+#     Input
+#         df_available: see above
+#         set_period = dict {"set_from": "%Y-%m-%d", "set_to": "%Y-%m-%d"}
+#     """
+#     available_periods = df_available[["from", "to"]].values.tolist()
+#     set_period = list(set_period.values())
+#     periods_durations = []
+#     for period in available_periods:
+#         b, e = calc_periods_intersection(set_period, period)
+#         duration = 0
+#         b_str = ""
+#         e_str = ""
+#         if isinstance(b, datetime.datetime):
+#             duration = (e - b).days
+#             b_str = datetime.datetime.strftime(b, "%Y-%m-%d")
+#             e_str = datetime.datetime.strftime(e, "%Y-%m-%d")
+#         periods_durations.append([b_str, e_str, duration])
+#     df = pd.DataFrame(periods_durations, columns=["from", "to", "duration"])
+#     df["station"] = df_available["station"]
+#     df = df[["station", "from", "to", "duration"]]
+#     return df
 
 
-def calc_periods_durations(df_available, set_period):
-    available_periods = df_available[["from", "to"]].values.tolist()
-    set_period = list(set_period.values())
-    periods_durations = []
-    for period in available_periods:
-        b, e = calc_periods_intersection(set_period, period)
-        duration = 0
-        b_str = ""
-        e_str = ""
-        if isinstance(b, datetime.datetime):
-            duration = (e - b).days
-            b_str = datetime.datetime.strftime(b, "%Y-%m-%d")
-            e_str = datetime.datetime.strftime(e, "%Y-%m-%d")
-        periods_durations.append([b_str, e_str, duration])
-    df = pd.DataFrame(periods_durations, columns=["from", "to", "duration"])
-    df["station"] = df_available["station"]
-    df = df[["station", "from", "to", "duration"]]
-    return df
+# def calc_periods_intersection(period_0, period_1):
+#     try:
+#         b_0 = datetime.datetime.strptime(period_0[0], "%Y-%m-%d")
+#         e_0 = datetime.datetime.strptime(period_0[1], "%Y-%m-%d")
+#         b_1 = datetime.datetime.strptime(period_1[0], "%Y-%m-%d")
+#         e_1 = datetime.datetime.strptime(period_1[1], "%Y-%m-%d")
+#     except Exception as ex:
+#         # print(ex)
+#         b = np.nan
+#         e = np.nan
+#     else:
+#         b = max(b_0, b_1)
+#         e = min(e_0, e_1)
+#     if b > e:
+#         b = np.nan
+#         e = np.nan
+#     return b, e
 
 
 def count_intensity_in_dataframe(df):
@@ -169,52 +132,52 @@ def count_intensity_in_dataframe(df):
     return cum_counts
 
 
-def add_date_column_to_dataframe(df):
-    df.loc[df['day'] == '//', 'day'] = '15'
-    df = df.drop(df[df.day == "  "].index)
-    df = df.drop(df[df.day == '00'].index)
-    df['date'] = pd.to_datetime(df[['year', 'month', 'day']])
-    return df
+# def add_date_column_to_dataframe(df):
+#     df.loc[df['day'] == '//', 'day'] = 15
+#     df = df.drop(df[df.day == "  "].index)
+#     df = df.drop(df[df.day == '00'].index)
+#     df['date'] = pd.to_datetime(df[['year', 'month', 'day']])
+#     return df
 
 
-def take_data_subset_by_period(station, date_b, date_e, dir_data):
-    try:
-        df = pd.read_csv(dir_data + 'st_' + str(station) + '.txt')
-    except Exception as ex:
-        df = None
-        print(ex, " at ", station)
-    else:
-        date_b = datetime.datetime.strptime(date_b, "%Y-%m-%d")
-        date_e = datetime.datetime.strptime(date_e, "%Y-%m-%d")
-        df = add_date_column_to_dataframe(df)
-        df = df[(df["date"] >= date_b) & (df["date"] <= date_e)]
-    return df
+# def take_data_subset_by_period(station, date_b, date_e, dir_data):
+#     try:
+#         df = pd.read_csv(dir_data + 'st_' + str(station) + '.txt')
+#     except Exception as ex:
+#         df = None
+#         print(ex, " at ", station)
+#     else:
+#         date_b = datetime.datetime.strptime(date_b, "%Y-%m-%d")
+#         date_e = datetime.datetime.strptime(date_e, "%Y-%m-%d")
+#         df = add_date_column_to_dataframe(df)
+#         df = df[(df["date"] >= date_b) & (df["date"] <= date_e)]
+#     return df
 
 
-def create_intensity_frequency_table_of_period(actual, dir_data='./'):
-    columns = ["int1", "int2", "int3", "int4", "int5", "int6", "int7"]
-    stations = actual["station"].values
-    cum_counts_s = []
-    for i_station, station in enumerate(stations):
-        if actual.at[i_station, "duration"] == 0:
-            cum_counts = np.zeros(7)
-        else:
-            date_b = actual.at[i_station, "from"]
-            date_e = actual.at[i_station, "to"]
-            df = take_data_subset_by_period(station, date_b, date_e, dir_data)
-            if df is not None:
-                cum_counts = count_intensity_in_dataframe(df)
-            else:
-                cum_counts = np.zeros(7)
-        cum_counts_s.append(cum_counts)
-    df_c = pd.DataFrame(cum_counts_s, columns=columns)
-    actual_res = pd.concat([actual, df_c], axis=1)
-    actual_res_sum = actual_res.sum()
-    actual_res_sum["station"] = actual_res.at[0, "station"]
-    duration = actual_res_sum["duration"]
-    frequency = actual_res_sum[columns]
-    frequency = frequency[frequency > 0] / duration * 365.2425
-    return frequency, actual_res_sum
+# def create_intensity_frequency_table_of_period(actual, dir_data='./'):
+#     columns = ["int1", "int2", "int3", "int4", "int5", "int6", "int7"]
+#     stations = actual["station"].values
+#     cum_counts_s = []
+#     for i_station, station in enumerate(stations):
+#         if actual.at[i_station, "duration"] == 0:
+#             cum_counts = np.zeros(7)
+#         else:
+#             date_b = actual.at[i_station, "from"]
+#             date_e = actual.at[i_station, "to"]
+#             df = take_data_subset_by_period(station, date_b, date_e, dir_data)
+#             if df is not None:
+#                 cum_counts = count_intensity_in_dataframe(df)
+#             else:
+#                 cum_counts = np.zeros(7)
+#         cum_counts_s.append(cum_counts)
+#     df_c = pd.DataFrame(cum_counts_s, columns=columns)
+#     actual_res = pd.concat([actual, df_c], axis=1)
+#     actual_res_sum = actual_res.sum()
+#     actual_res_sum["station"] = actual_res.at[0, "station"]
+#     duration = actual_res_sum["duration"]
+#     frequency = actual_res_sum[columns]
+#     frequency = frequency[frequency > 0] / duration * 365.2425
+#     return frequency, actual_res_sum
 
 
 def find_regression_int_freq(frequency):
@@ -237,40 +200,44 @@ def find_regression_int_freq(frequency):
     return res, est7, est6, est6p5
 
 
-def find_intensity_frequency_regression_summarize(
-        meta, station, set_dict, dir_data='./'):
-    available = find_available_periods(meta, station)
-    actual = calc_periods_durations(available, set_dict)
-    frequency, summary = \
-        create_intensity_frequency_table_of_period(actual, dir_data)
-    summary["from"] = summary["from"][:10]
-    summary["to"] = summary["to"][-10:]
-    summary["slope"] = np.nan
-    summary["intercept"] = np.nan
-    summary["rvalue"] = np.nan
-    summary["est7"] = np.nan
-    summary["est6p5"] = np.nan
-    summary["est6"] = np.nan
-    regression = None
-    if len(frequency) > 2:
-        regression, est7, est6, est6p5 = find_regression_int_freq(frequency)
-        summary["slope"] = np.round(regression.slope, 3)
-        summary["intercept"] = np.round(regression.intercept, 3)
-        summary["rvalue"] = np.round(regression.rvalue, 3)
-        summary["est7"] = round_to_k(est7, 3)
-        summary["est6"] = round_to_k(est6, 3)
-        summary["est6p5"] = round_to_k(est6p5, 3)
-    return frequency, regression, summary
+# def find_intensity_frequency_regression_summarize(
+#         meta, station, set_dict, dir_data='./'):
+#     available = find_available_periods(meta, station)
+#     actual = calc_periods_durations(available, set_dict)
+#     frequency, summary = \
+#         create_intensity_frequency_table_of_period(actual, dir_data)
+#     summary["from"] = summary["from"][:10]
+#     summary["to"] = summary["to"][-10:]
+#     summary["slope"] = np.nan
+#     summary["intercept"] = np.nan
+#     summary["rvalue"] = np.nan
+#     summary["est7"] = np.nan
+#     summary["est6p5"] = np.nan
+#     summary["est6"] = np.nan
+#     regression = None
+#     if len(frequency) > 2:
+#         regression, est7, est6, est6p5 = find_regression_int_freq(frequency)
+#         summary["slope"] = np.round(regression.slope, 3)
+#         summary["intercept"] = np.round(regression.intercept, 3)
+#         summary["rvalue"] = np.round(regression.rvalue, 3)
+#         summary["est7"] = round_to_k(est7, 3)
+#         summary["est6"] = round_to_k(est6, 3)
+#         summary["est6p5"] = round_to_k(est6p5, 3)
+#     return frequency, regression, summary
 
 
 ################################################################################
-#    Considering the time up to seconds
+#    Considering the time up to seconds (TS)
 ################################################################################
 
 
 def find_available_periods_ts(meta, station):
     meta_1 = meta[meta["code_prime"] == station]
     meta_1 = meta_1.reset_index(drop=True)
+    return find_available_periods_meta_1_ts(meta_1)
+   
+
+def find_available_periods_meta_1_ts(meta_1):
     dfsp = pd.DataFrame(columns=["station", "from", "to"])
     dfsp["station"] = eval(meta_1.at[0, "codes_ordered"])
     dfsp["from"] = eval(meta_1.at[0, "datetime_b_s"])
@@ -298,7 +265,7 @@ def calc_periods_intersection_ts(period_0, period_1):
 
 
 def calc_periods_durations_ts(df_available, set_period):
-    available_periods = df_available[["from", "to"]].values.tolist()
+    available_periods = df_available[["from", "to"]].values
     set_period = list(set_period.values())
     periods_durations = []
     for period in available_periods:
@@ -318,15 +285,31 @@ def calc_periods_durations_ts(df_available, set_period):
 
 
 def add_datetime_column_to_dataframe(df):
+    """
+    Feb 2. 2024, df["second"] == '  . ' added.
+    """
     df = df.drop(df[df.day == "  "].index)
     df = df.drop(df[df.day == '00'].index)
-    df.loc[df['day'] == '//', 'day'] = '15'
+    df.loc[df['day'] == '//', 'day'] = 15
     df.loc[df['hour'] == '//', 'hour'] = 12
+    df.loc[df['hour'] == '  ', 'hour'] = 12
     df.loc[df['minute'] == '//', 'minute'] = 0
+    df.loc[df['minute'] == '  ', 'minute'] = 0
     df.loc[df['second'] == '//. ', 'second'] = 0
-    df['date_time'] = pd.to_datetime(
-        df[['year', 'month', 'day', 'hour', 'minute', 'second']])
-    return df
+    df.loc[df['second'] == '  . ', 'second'] = 0
+    df.loc[df['second'] == '2 . ', 'second'] = 0
+    df.loc[df['second'] == '3 . ', 'second'] = 0
+    df.loc[df['second'] == '4 . ', 'second'] = 0
+    df.loc[df['second'] == '5 . ', 'second'] = 0
+    df.loc[df['second'] == '7 . ', 'second'] = 0
+    df.loc[df['second'] == '0 . ', 'second'] = 0
+    try:
+        df['date_time'] = pd.to_datetime(
+            df[['year', 'month', 'day', 'hour', 'minute', 'second']])
+        return df
+    except Exception as ex:
+        print(ex)
+        sys.exit()
 
 
 def take_data_subset_by_period_ts(station, datetime_b, datetime_e, dir_data):
@@ -372,18 +355,21 @@ def create_intensity_frequency_table_of_period_ts(actual, dir_data='./'):
 
 def find_intensity_frequency_regression_summarize_ts(
         meta, station, set_dict, dir_data='./'):
-    available = find_available_periods_ts(meta, station)
+    meta_1 = meta[meta["code_prime"] == station]
+    meta_1 = meta_1.reset_index(drop=True)
+    available = find_available_periods_meta_1_ts(meta_1)
     actual = calc_periods_durations_ts(available, set_dict)
     frequency, summary = \
         create_intensity_frequency_table_of_period_ts(actual, dir_data)
     summary["from"] = summary["from"][:10]
-    summary["to"] = summary["to"][-10:]
+    summary["to"] = summary["to"][:10]
     summary["slope"] = np.nan
     summary["intercept"] = np.nan
     summary["rvalue"] = np.nan
     summary["est7"] = np.nan
     summary["est6p5"] = np.nan
     summary["est6"] = np.nan
+    summary["address"] = meta_1.at[0, "address"]
     regression = None
     if len(frequency) > 2:
         regression, est7, est6, est6p5 = find_regression_int_freq(frequency)
@@ -394,6 +380,18 @@ def find_intensity_frequency_regression_summarize_ts(
         summary["est6"] = round_to_k(est6, 3)
         summary["est6p5"] = round_to_k(est6p5, 3)
     return frequency, regression, summary
+
+
+def find_first_and_last_record_of_station(station, dir_data):
+    fn = dir_data + "st_" + str(station) + ".txt"
+    df = pd.read_csv(fn)
+    df = add_datetime_column_to_dataframe(df)
+    # print(df)
+    first = datetime.datetime.strftime(
+        df.at[df.index[0], "date_time"], "%Y-%m-%d %H:%M:%S")
+    last = datetime.datetime.strftime(
+        df.at[df.index[-1], "date_time"], "%Y-%m-%d %H:%M:%S")
+    return [first, last]
 
 
 def find_datetime_beginning(code, num_from, datetime_beginning, dir_data='./'):
@@ -764,12 +762,12 @@ def calc_date_b_date_e_duration(
 #   Intervals
 ################################################################################
 
-def calc_intervals(dir_data, code, beginning='1919-01-01', end='2019-12-31'):
+def calc_intervals(dir_data, code, beginning='1919-01-01', end='2100-12-31'):
     print(dir_data, code, beginning, end)
     try:
         d7, d6, d5, d4, d3, d2, d1 = create_subdfs_by_intensities(
             code, beginning=beginning, end=end,
-            dir=dir_data)
+            dir_data=dir_data)
         # print(d4)
     except ValueError as ve:
         print(code, 'cannot be read.', ve)
@@ -805,7 +803,7 @@ def calc_intervals_n_raw_counts(
     try:
         d7, d6, d5, d4, d3, d2, d1 = create_subdfs_by_intensities(
             code, beginning=beginning, end=end,
-            dir=dir_data)
+            dir_data=dir_data)
         # print(d4)
     except ValueError as ve:
         print(code, 'cannot be read.', ve)
@@ -867,12 +865,22 @@ def calc_regression_intervals(dfis, reg_thres, upto=5):
 
 def calc_latitude(lat):
     lat = str(lat)
-    return eval(lat[:2]) + eval(lat[2:4]) / 60
+    return int(lat[:2]) + int(lat[2:4]) / 60
 
 
 def calc_longitude(lon):
     lon = str(lon)
-    return eval(lon[:3]) + eval(lon[3:5])
+    # print(lon)
+    # print(type(lon))
+    return int(lon[:3]) + int(lon[3:5]) / 60
+
+
+def find_lonlat_for_station(station, code_p):
+    dfsel = code_p[code_p["code"] == station]
+    dfsel = dfsel.reset_index(drop=True)
+    # print(dfsel)
+    return [calc_longitude(dfsel.at[0, "lon"]), calc_latitude(dfsel.at[0, "lat"])]
+
 
 def calc_latlon(meta):
     temp = meta.loc[:, ['lat', 'lon']]
@@ -906,7 +914,7 @@ def calc_range_latlon(meta, include_all_japan_lands):
 
 
 ################################################################################
-#   Analyse counts at intensities, with or without considering the aftershocks
+#   Analyze counts at intensities, with or without considering the aftershocks
 ################################################################################
 
 def create_subdfs_by_intensities_new(
@@ -918,7 +926,7 @@ def create_subdfs_by_intensities_new(
         print('Empty data at ', station, ex)
         return None
     df = df[df['day'] != "  "]
-    df.loc[df['day'] == '//', 'day'] = '15'
+    df.loc[df['day'] == '//', 'day'] = 15
     df = df.drop(df[df.day == '00'].index)
     df['date'] = pd.to_datetime(df[['year', 'month', 'day']])
     # beginning_dt = datetime.datetime.strptime(beginning, "%Y-%m-%d")
@@ -953,7 +961,7 @@ def create_subdfs_by_intensities(
     except Exception as ex:
         print('Empty data at ', station, ex)
         return None
-    df.loc[df['day'] == '//', 'day'] = '15'
+    df.loc[df['day'] == '//', 'day'] = 15
     df = df.drop(df[df.day == '00'].index)
     df['date'] = pd.to_datetime(df[['year', 'month', 'day']])
     beginning_dt = datetime.datetime.strptime(beginning, "%Y-%m-%d")
@@ -981,8 +989,8 @@ def create_subdfs_by_intensities(
 
 def count_considering_aftershocks(df, intensity, remiflt):
     n_raw_count = len(df)
-    df.loc[df['day'] == '//', 'day'] = '15'
-    # df.loc[df['day'] == '00', 'day'] = '15'
+    df.loc[df['day'] == '//', 'day'] = 15
+    # df.loc[df['day'] == '00', 'day'] = 15
     df['diff'] = df['date'].diff() / np.timedelta64(1, "D")
     dfrem = df[df['diff'] < remiflt[str(intensity)]]
     n_to_rem = len(dfrem)
@@ -1138,150 +1146,6 @@ def create_figure_intensity_vs_occurrence(
     return fig, ax
 
 
-def draw_scatter(meta, col, minus=True, log_scale=True, cmap='Reds',
-                 lmax= None, lmin=None, lstep=.5, colorbartitle=None,
-                 lon_min=122, lon_max=154, lat_min=20, lat_max=46,
-                 contour_alpha=1,
-                 plot_stations=True, station_size=5, station_alpha=.5):
-    fig = plt.figure(figsize=(10.8, 10.8), facecolor=None)
-    ax = fig.add_axes(
-        [0.025, 0.08, .9, .9],
-        projection=ccrs.PlateCarree(central_longitude=180))
-    fig.patch.set_alpha(0)
-    ax.tick_params(axis='both', which='both', direction='in')
-    ax.coastlines(resolution='10m', lw=.5)
-    ax.set_extent([lon_min, lon_max, lat_min, lat_max])
-    latitude = meta['latitude']
-    longitude = meta['longitude']
-    val = meta[col]
-    if minus:
-        val = - val
-    if log_scale:
-        val = meta[col].apply(np.log10)
-    if lmax is not None:
-        val_max = lmax
-    else:
-        val_max = val.max()
-    if lmin is not None:
-        val_min = lmin
-    else:
-        val_min = val.min()
-    val_range = val_max - val_min
-    print(val_max, val_min, val_range)
-    floor = int(val_min / lstep) * lstep
-    ceiling = (int(val_max / lstep) + 1) * lstep
-    levels = np.arange(floor, ceiling, lstep)
-    n_gridlon = 2000
-    n_gridlat = 2000
-    lon_i = np.linspace(lon_min, lon_max, n_gridlon)
-    lat_i = np.linspace(lat_min, lat_max, n_gridlat)
-    triang = tri.Triangulation(longitude, latitude)
-    interpolator = tri.LinearTriInterpolator(triang, val)
-    mesh_lon_i, mesh_lat_i = np.meshgrid(lon_i, lat_i)
-    val_i = interpolator(mesh_lon_i, mesh_lat_i)
-    val_i2 = ndimage.gaussian_filter(val_i, sigma=0, order=0)
-    ax.add_feature(cfeature.OCEAN, zorder=100, edgecolor='k', lw=0.5,
-                   facecolor='#eeeeee')
-    scatter = ax.scatter(
-        longitude, latitude, c=val, transform=ccrs.PlateCarree(),
-        cmap=cmap, alpha=contour_alpha, zorder=200, clip_on=False,
-        edgecolor='k', linewidth=.5
-    )
-    divider = make_axes_locatable(ax)
-    ax_cb = divider.new_horizontal(size="5%", pad=0.05, axes_class=plt.Axes)
-
-    fig.add_axes(ax_cb)
-    cb = plt.colorbar(scatter, cax=ax_cb)
-    cb.ax.set_title(colorbartitle)
-
-    return fig, ax
-
-
-def draw_contour(meta, col, minus=True, log_scale=True, cmap='Reds',
-                 lmax=None, lmin=None, lstep=.5, colorbartitle=None,
-                 lon_min=122, lon_max=154, lat_min=20, lat_max=46,
-                 contour_alpha=1,
-                 plot_stations=True, station_size=5, station_alpha=.5):
-
-    # mloc= plt.MultipleLocator(5)
-    fig = plt.figure(figsize=(10.8, 10.8), facecolor=None)
-    # ax = fig.add_subplot(
-    #     1, 1, 1, projection=ccrs.PlateCarree(central_longitude=180))
-    ax = fig.add_axes(
-        [0.025, 0.08, .9, .9],
-        projection=ccrs.PlateCarree(central_longitude=180))
-    # ax.set_facecolor(color=None)
-    fig.patch.set_alpha(0)
-
-    ax.tick_params(axis='both', which='both', direction='in')
-    ax.coastlines(resolution='10m', lw=.5)
-    # ax.gridlines(draw_labels=True, xlocs=mloc, ylocs=mloc, dms=True,
-    #              zorder=-100)
-    ax.set_extent([lon_min, lon_max, lat_min, lat_max])
-    latitude = meta['latitude']
-    longitude = meta['longitude']
-    values_col = np.array(meta[col])
-    if minus:
-        vala = - values_col[values_col < 0]
-        vala = vala.astype(np.float64)
-    else:
-        # meta = meta[meta[col] > 0]
-        vala = values_col[values_col > 0]
-        vala = vala.astype(np.float64)
-    # print(vala)
-    # for i in range(len(vala)):
-    #     if vala[i] <= 0:
-    #         print("val is zero at {}".format(i))
-    # print("type of vala", type(vala))
-    if log_scale:
-        val = np.log10(vala)
-    if lmax is not None:
-        val_max = lmax
-    else:
-        val_max = val.max()
-    if lmin is not None:
-        val_min = lmin
-    else:
-        val_min = val.min()
-    val_range = val_max - val_min
-    print(val_max, val_min, val_range)
-    floor = int(val_min / lstep) * lstep
-    ceiling = (int(val_max / lstep) + 1) * lstep
-    levels = np.arange(floor, ceiling, lstep)
-    n_gridlon = 2000
-    n_gridlat = 2000
-    lon_i = np.linspace(lon_min, lon_max, n_gridlon)
-    lat_i = np.linspace(lat_min, lat_max, n_gridlat)
-    triang = tri.Triangulation(longitude, latitude)
-    interpolator = tri.LinearTriInterpolator(triang, val)
-    mesh_lon_i, mesh_lat_i = np.meshgrid(lon_i, lat_i)
-    val_i = interpolator(mesh_lon_i, mesh_lat_i)
-    val_i2 = ndimage.gaussian_filter(val_i, sigma=0, order=0)
-    ax.add_feature(cfeature.OCEAN, zorder=100, edgecolor='k', lw=0.5,
-                   facecolor='#cccccc')
-    contourf = ax.contourf(
-        lon_i, lat_i, val_i2, transform=ccrs.PlateCarree(), levels=levels,
-        cmap=cmap, alpha=contour_alpha
-    )
-    ax.contour(
-        lon_i, lat_i, val_i2, transform=ccrs.PlateCarree(), levels=levels,
-        linewidths=.5, colors='k', linestyles='-'
-    )
-    divider = make_axes_locatable(ax)
-    ax_cb = divider.new_horizontal(size="5%", pad=0.05, axes_class=plt.Axes)
-
-    fig.add_axes(ax_cb)
-    cb = plt.colorbar(contourf, cax=ax_cb)
-
-    # cb = plt.colorbar(contourf, shrink=0.75)
-    cb.ax.set_title(colorbartitle)
-    if plot_stations:
-        ax.scatter(
-            longitude, latitude, c='k', transform=ccrs.PlateCarree(),
-            s=station_size, alpha=station_alpha, zorder=2000
-        )
-
-    return fig, ax
 
 
 def main():

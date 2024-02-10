@@ -1,4 +1,0 @@
-station,intensity,year,month,day,hour,minute,second,intensity_equip,acceleration_max_comb
-4610237,2,2016,04,01,11,39,50. ,15,00035
-4610237,2,2018,06,18,07,58,50. ,17,00068
-4610237,1,2020,11,07,15,56,58. ,05,00081

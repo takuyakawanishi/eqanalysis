@@ -1,0 +1,4 @@
+station,intensity,year,month,day,hour,minute,second,intensity_equip,acceleration_max_comb
+7040037,1,2021,06,19,07,39,44. ,08,00024
+7040037,1,2021,07,08,01,24,54. ,06,00024
+7040037,2,2021,07,17,20,50,14. ,24,00186

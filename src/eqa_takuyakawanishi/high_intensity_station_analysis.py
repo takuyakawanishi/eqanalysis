@@ -2,7 +2,10 @@ import datetime
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import src.eqa_takuyakawanishi.eqa as eqa
+import sys
+sys.path.append("./")
+
+import eqanalysis.src.eqa_takuyakawanishi.eqa as eqa
 # import dashfiles.layouts.fig_template as fig_template
 
 DATE_B_MACHINE = "1996-04-01"
@@ -20,8 +23,8 @@ def find_dates_of_occurrence(intensity, df):
 
 
 def main():
-    dir_data = '../../data/stationwise_fine_old_until_2019/'
-    file2read = '../../intermediates/organized_codes_pre_02.csv'
+    dir_data = 'eqanalysis/data/stationwise_fine_old_until_2019/'
+    file2read = 'eqanalysis/intermediates/organized_codes_pre_02.csv'
     meta = pd.read_csv(file2read)
     having_Ds = [2502330, 3110032, 2510430, 3000330, 3000131]
     # having_Ds = [1460630, 1460920, 1460921, 1461020, 1461021, 2132733, 2201600,
