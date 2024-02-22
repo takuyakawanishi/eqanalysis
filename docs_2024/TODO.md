@@ -20,4 +20,11 @@
 
 * MAKE DATETIME_E_S, final be "2022-01-01 00:00:00"
   * This should be automatic, refer to stationwise_20aa 
+
+* MOST IMPORTANTLY
+* we have to check the following.
+* The frequency of intensity 7 earthquake increased one year after the euqke from one day after the quake. This is impossible.
+* No, station 7413931 experienced TWO quakes in two days.
+
+
   

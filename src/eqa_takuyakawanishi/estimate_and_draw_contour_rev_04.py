@@ -105,11 +105,11 @@ def draw_contour(meta, col, minus=True, log_scale=True, cmap='Reds',
                  ):
 
     # mloc= plt.MultipleLocator(5)
-    fig = plt.figure(figsize=(10.8, 10.8), facecolor=None)
+    fig = plt.figure(figsize=(10, 8.8), facecolor=None)
     # ax = fig.add_subplot(
     #     1, 1, 1, projection=ccrs.PlateCarree(central_longitude=180))
     ax = fig.add_axes(
-        [0.025, 0.08, .9, .9],
+        [0.02, 0.02, .9, .94],
         projection=ccrs.PlateCarree())
     # ax.set_facecolor(color=None)
     fig.patch.set_alpha(0)
@@ -230,7 +230,7 @@ def main():
     # conf.date_beginning = '1996-04-01'
     conf.date_beginning = '1919-01-01 00:00:00'
     # conf.date_beginning = '1996-04-01 00:00:00'
-    conf.date_end = str(eval(end_year) + 1) + "-01-01 00:00:00"
+    # conf.date_end = str(eval(end_year)) + "-12-31 23:59:59"
     # conf.date_end = datetime.datetime.strftime(datetime.datetime.now(), "%Y-%m-%d %H:%M:%S")
     conf.date_end = "2011-03-10 23:59:59"
     # conf.date_end = "2023-12-31 23:59:59"

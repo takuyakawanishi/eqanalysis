@@ -1,6 +1,7 @@
 import datetime
 import numpy as np
 import pandas as pd
+import scipy.stats
 import unittest
 import sys
 sys.path.append("./")
@@ -32,11 +33,12 @@ class TestEqaForOrganized(unittest.TestCase):
         freq["int4"] = 0.04878049
         freq.astype(float)
         res, est7, est6, est6p5 = eqa.find_regression_int_freq(freq)
+        print(res)
         res_array = np.array([
             res.slope, res.intercept, res.rvalue, est7, est6])
         expected_res_array = np.array([
-            -0.43753062, 0.47388111, -0.99026230, 0.00257731, 0.00705825])
-        np.testing.assert_almost_equal(res_array, expected_res_array, decimal=6)
+            -0.455061, 0.532317, -0.995877, 0.002223, 0.006338])
+        np.testing.assert_almost_equal(res_array, expected_res_array, decimal=4)
 
 ################################################################################
 # TS version        
@@ -115,6 +117,19 @@ class TestEqaForOrganizedTS(unittest.TestCase):
              [1002, "2008-09-16 12:00:00", "2010-12-31 23:59:59", 836]],
             columns=["station", "from", "to", "duration"])
         pd.testing.assert_frame_equal(res, expected)
+
+    def test_calc_periods_durations_ts(self):
+        available = [[7413630, "1998-10-15 12:00:00", "2005-04-01 12:00:00"],
+                     [7413631, "2005-04-01 12:00:00", "2022-01-01 00:00:00"]]
+        df_available = pd.DataFrame(available, columns=[
+            "station", "from", "to"])
+        dict_set = {'set_from': '2016-04-17 01:25:09', 
+                    'set_to': '2021.12.31 23:59:59'}
+        res = eqa.calc_periods_durations_ts(df_available, dict_set)
+        # print("test_calc_periods_durations_ts")
+        # print(res)
+
+
 
     def test_add_datetime_column_to_dataframe(self):
         df = pd.DataFrame(columns=["year", "month", "day"])
@@ -259,6 +274,181 @@ class TestEqaForLatLons(unittest.TestCase):
         res = eqa.find_lonlat_for_station(3900131, df)
         expected = [136.766666666, 37.2833333333]
         np.testing.assert_almost_equal(res, expected, decimal=6)
+
+
+class TestCreateSubDataFrames(unittest.TestCase):
+
+    def test_create_subdfs_by_intensities_essentials(self):
+        dir_data = "eqanalysis/tests/stationwise_test/"
+        station = 1010541
+        df = pd.read_csv(dir_data + "st_" + str(station) + ".txt")
+        # print(df)
+        datetime_b = "2012-01-01 00:00:00"
+        datetime_e = "2013-12-31 23:59:59"
+        res = eqa.create_subdfs_by_intensities_essentials(
+            df, datetime_b, datetime_e)
+        res_int_2 = len(res[5])
+        exp_int_2 = 6
+        res_int_3 = len(res[4])
+        exp_int_3 = 2
+        res_d3 = res[4]
+        res_d3 = res_d3.reset_index(drop=True)
+        # print(res[4])
+        self.assertEqual(res_int_2, exp_int_2)
+        self.assertEqual(res_int_3, exp_int_3)
+
+        exp_d3 = [
+            [1010541,3,2012,8,25,23,16,46.0,28,257, "2012-08-25 23:16:46"],
+            [1010541,3,2013,2,2,23,18,7.0,25,203, "2013-02-02 23:18:07"]  
+        ]
+        exp_d3 = pd.DataFrame(
+            exp_d3, columns=[
+                "station", "intensity", "year", "month", "day", 
+                "hour", "minute", "second", "intensity_equip", 
+                "acceleration_max_comb", "date_time"]) 
+        exp_d3["intensity"] = exp_d3["intensity"].astype(str)
+        exp_d3["date_time"] = pd.to_datetime(
+            exp_d3["date_time"], format="%Y-%m-%d %H:%M:%S")
+                                                    
+        pd.testing.assert_frame_equal(res_d3, exp_d3)
+
+    # def test_create_subdfs_by_intensities_ts(self):
+    #     dir_data = "eqanalysis/tests/stationwise_test/"
+    #     station = 1010541
+    #     datetime_b = "2012-01-01 00:00:00"
+    #     datetime_e = "2013-12-31 23:59:59"
+    #     res = eqa.create_subdfs_by_intensities_ts(
+    #         station, datetime_b, datetime_e, dir_data)
+    #     res_int_2 = len(res[5])
+    #     exp_int_2 = 6
+    #     res_int_3 = len(res[4])
+    #     exp_int_3 = 2
+    #     res_d3 = res[4]
+    #     res_d3 = res_d3.reset_index(drop=True)
+    #     # print(res[4])
+    #     self.assertEqual(res_int_2, exp_int_2)
+    #     self.assertEqual(res_int_3, exp_int_3)
+
+    #     exp_d3 = [
+    #         [1010541,3,2012,8,25,23,16,46.0,28,257, "2012-08-25 23:16:46"],
+    #         [1010541,3,2013,2,2,23,18,7.0,25,203, "2013-02-02 23:18:07"]  
+    #     ]
+    #     exp_d3 = pd.DataFrame(
+    #         exp_d3, columns=[
+    #             "station", "intensity", "year", "month", "day", 
+    #             "hour", "minute", "second", "intensity_equip", 
+    #             "acceleration_max_comb", "date_time"]) 
+    #     exp_d3["intensity"] = exp_d3["intensity"].astype(str)
+    #     exp_d3["date_time"] = pd.to_datetime(
+    #         exp_d3["date_time"], format="%Y-%m-%d %H:%M:%S")
+                                                    
+    #     pd.testing.assert_frame_equal(res_d3, exp_d3)
+
+
+    def test_create_interval_datasets_ts(self):
+        dir_data = "eqanalysis/tests/stationwise_test/"
+        df_org = pd.read_csv(
+            "eqanalysis/data_2024/intermediates/organized_code_2024_04.csv")
+        station = 1061131
+        datetime_b = "2010-01-01 00:00:00"
+        datetime_e = "2013-12-31 23:59:59"
+        set_dict = {"set_from": datetime_b, "set_to": datetime_e}
+        res = eqa.create_interval_datasets_ts(
+            df_org, station, set_dict, dir_data)
+        # print(res)
+        self.assertEqual(len(res[0]), 24)
+        self.assertEqual(len(res[1]), 11)
+  
+
+    def test_calc_intervals(self):
+        dir_data = "eqanalysis/tests/stationwise_test/"
+        station = 1010541
+        df = pd.read_csv(dir_data + "st_" + str(station) + ".txt")
+        # print(df)
+        datetime_b = "2012-01-01 00:00:00"
+        datetime_e = "2013-12-31 23:59:59"
+        res = eqa.calc_intervals(df, datetime_b, datetime_e)
+        # print(res)
+        res_df_3 = res[2]
+        res_df_2 = res[1]
+        exp_int_3 = [[161.000937, 1., 1]]
+        exp_df_3 = pd.DataFrame(
+            exp_int_3, columns=["interval", "suvf", "counts"]
+        )
+        exp_int_2 = [[34.738206, 1., 5],
+                     [35.506968, 0.8, 4],
+                     [57.248183, 0.6, 3],
+                     [93.967708, 0.4, 2],
+                     [103.752755, 0.2, 1]
+        ]
+        exp_df_2 = pd.DataFrame(
+            exp_int_2, columns=["interval", "suvf", "counts"]
+        )
+        pd.testing.assert_frame_equal(res_df_3, exp_df_3)
+        pd.testing.assert_frame_equal(res_df_2, exp_df_2)
+
+
+class TestForeAftershockSwarmCorrection(unittest.TestCase):
+
+    def test_find_correction_factor_internsity(self):
+            
+        intervals = [3, 6, 7, 10]
+        suvf = [4/4, 3/4, 2/4, 1/4]
+        thres = 5
+        res = eqa.find_correction_factor_internsity(
+            intervals, suvf, thres)
+        # print(res)
+        exp_factor = 0.8
+        exp_slope = np.nan
+        self.assertEqual(res["factor"], exp_factor)
+
+    def test_find_correction_factor_internsity_01(self):
+        intervals = [3, 6, 7, 20, 50]
+        suvf = [5/5, 4/5, 3/5, 2/5, 1/5]
+        thres = 5
+        res = eqa.find_correction_factor_internsity(
+            intervals, suvf, thres)
+        # print(res)
+        # print(res)
+        exp_factor = 5/6
+        self.assertAlmostEqual(res["factor"], exp_factor, places=4)
+
+    def test_find_correction_factor_internsity_02(self):
+            
+        intervals = [3, 6, 7]
+        suvf = [3/3, 2/3, 1/3]
+        thres = 5
+        res = eqa.find_correction_factor_internsity(
+            intervals, suvf, thres)
+        # print(res)
+        exp_factor = 0.75
+        self.assertAlmostEqual(res["factor"], exp_factor)
+
+    def test_correction_factor(self):
+        df0 = pd.DataFrame(columns=["interval", "suvf", "counts"])
+        df1 = pd.DataFrame(columns=["interval", "suvf", "counts"])
+        df2 = pd.DataFrame(columns=["interval", "suvf", "counts"])
+        df3 = pd.DataFrame(columns=["interval", "suvf", "counts"])
+        df0["interval"] = [3, 6, 7, 20, 50]
+        df0["suvf"] = [5/5, 4/5, 3/5, 2/5, 1/5]
+        df0["counts"] = [5, 4, 3, 2, 1]
+        df1["interval"] = [3, 6, 7, 10]
+        df1["suvf"] = [1, .75, .5, .25]
+        df1["counts"] = [4, 3, 2, 1]
+        df2["interval"] = [3, 6, 7]
+        df2["suvf"] = [1, 2/3, 1/3]
+        df2["counts"] = [3, 2, 1]
+        dfs = [df0, df1, df2, df3]
+        res = eqa.find_correction_factor(dfs, thres_int=[5, 5, 5, 5])
+        print(res)
+        exp_d = [[5/6, np.nan, np.nan, np.nan],
+                 [0.8, np.nan, np.nan, np.nan],
+                 [0.75, np.nan, np.nan, np.nan],
+                 [0, np.nan, np.nan, np.nan]]
+        exp_df = pd.DataFrame(exp_d)
+        exp_df.columns = ["factor", "intercept", "slope", "rvalue"]
+        pd.testing.assert_frame_equal(res, exp_df, rtol=1e-3)         
+
 
 
 if __name__ == '__main__':

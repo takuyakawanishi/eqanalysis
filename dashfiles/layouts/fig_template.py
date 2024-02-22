@@ -75,7 +75,7 @@ class DashSettings(FigSettings):
             dbc.Container([
                 dbc.Row([
                     dbc.Col([
-                        html.Div(["EXAnalytics"],
+                        html.Div(["EQAnalysis"],
                         style={'color': '#eee', 'font-family': 'Georgia',
                                'font-size': '24px', 'padding': 0,
                                'padding-top': '4px',
@@ -97,7 +97,7 @@ class DashSettings(FigSettings):
                 dcc.Dropdown(
                     id='start-year',
                     options=[{'label': x, 'value': x} for x in
-                             range(1919, 2020)],
+                             range(1919, 2100)],
                     value=1919)
             ], style={'display': 'inline-block', 'width': '35%'}),
             html.Div([
@@ -121,8 +121,8 @@ class DashSettings(FigSettings):
                 dcc.Dropdown(
                     id='end-year',
                     options=[
-                        {'label': x, 'value': x} for x in range(1919, 2020)],
-                    value=2019)
+                        {'label': x, 'value': x} for x in range(1919, 2051)],
+                    value=2021)
             ], style={'display': 'inline-block', 'min-width': '35%'}),
             html.Div([
                 dcc.Dropdown(
@@ -143,23 +143,23 @@ class DashSettings(FigSettings):
             dbc.Container([
                 dbc.Row([
                     dbc.Col([
-                        html.Div(["EXAnalytics"],  # cc144f
+                        html.Div(["EQAnalysis"],  # cc144f
                         style={'color': '#cc8b00', 'font-family': 'Georgia',
                                'font-size': '24px',
-                               'padding-top': '4px', 'padding-bottom': '4px',
+                               'padding-top': '8px', 'padding-bottom': '4px',
                                'margin': 0}),
                     ], width={'size': 12}, sm=8, md=6, lg=4, xxl=3),
                     dbc.Col([
                         html.Div([title], style={
                             "color": "#eee", "font-family": "Georgia",
                             "font-size": "24px",
-                            "padding-top": "4px", "padding-bottom": "4px",
+                            "padding-top": "8px", "padding-bottom": "4px",
                             "margin": 0})
                     ], width={'size': 12}, lg=8, xxl=9)
                 ])
             ], fluid=False)  #, style={'max-width': '1440px'})
         ], fluid=True, style={
-            'min-width': '100vw', 'min-height': '48px',
+            'min-width': '100vw', 'min-height': '60px',
             'background-color': '#192f60',
             'margin-left': '-12px', 'margin-right': '-12px'}
         )

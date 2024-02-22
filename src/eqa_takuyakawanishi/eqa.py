@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import scipy.stats
 import scipy.ndimage as ndimage
+import time
 import warnings
 import sys
 
@@ -47,64 +48,8 @@ def clean_alt_list(list_):
 
 
 ################################################################################
-#
-#   Analysis based on organized_meta
-#
+#  Intensity and Frequency
 ################################################################################
-
-
-# def find_available_periods(meta, station):
-#     meta_1 = meta[meta["code_prime"] == station]
-#     meta_1 = meta_1.reset_index(drop=True)
-#     dfsp = pd.DataFrame(columns=["station", "from", "to"])
-#     dfsp["station"] = eval(meta_1.at[0, "codes_ordered"])
-#     dfsp["from"] = eval(meta_1.at[0, "date_b_s"])
-#     dfsp["to"] = eval(meta_1.at[0, "date_e_s"])
-#     return dfsp
-
-
-# def calc_periods_durations(df_available, set_period):
-#     """
-#     Input
-#         df_available: see above
-#         set_period = dict {"set_from": "%Y-%m-%d", "set_to": "%Y-%m-%d"}
-#     """
-#     available_periods = df_available[["from", "to"]].values.tolist()
-#     set_period = list(set_period.values())
-#     periods_durations = []
-#     for period in available_periods:
-#         b, e = calc_periods_intersection(set_period, period)
-#         duration = 0
-#         b_str = ""
-#         e_str = ""
-#         if isinstance(b, datetime.datetime):
-#             duration = (e - b).days
-#             b_str = datetime.datetime.strftime(b, "%Y-%m-%d")
-#             e_str = datetime.datetime.strftime(e, "%Y-%m-%d")
-#         periods_durations.append([b_str, e_str, duration])
-#     df = pd.DataFrame(periods_durations, columns=["from", "to", "duration"])
-#     df["station"] = df_available["station"]
-#     df = df[["station", "from", "to", "duration"]]
-#     return df
-
-
-# def calc_periods_intersection(period_0, period_1):
-#     try:
-#         b_0 = datetime.datetime.strptime(period_0[0], "%Y-%m-%d")
-#         e_0 = datetime.datetime.strptime(period_0[1], "%Y-%m-%d")
-#         b_1 = datetime.datetime.strptime(period_1[0], "%Y-%m-%d")
-#         e_1 = datetime.datetime.strptime(period_1[1], "%Y-%m-%d")
-#     except Exception as ex:
-#         # print(ex)
-#         b = np.nan
-#         e = np.nan
-#     else:
-#         b = max(b_0, b_1)
-#         e = min(e_0, e_1)
-#     if b > e:
-#         b = np.nan
-#         e = np.nan
-#     return b, e
 
 
 def count_intensity_in_dataframe(df):
@@ -132,54 +77,6 @@ def count_intensity_in_dataframe(df):
     return cum_counts
 
 
-# def add_date_column_to_dataframe(df):
-#     df.loc[df['day'] == '//', 'day'] = 15
-#     df = df.drop(df[df.day == "  "].index)
-#     df = df.drop(df[df.day == '00'].index)
-#     df['date'] = pd.to_datetime(df[['year', 'month', 'day']])
-#     return df
-
-
-# def take_data_subset_by_period(station, date_b, date_e, dir_data):
-#     try:
-#         df = pd.read_csv(dir_data + 'st_' + str(station) + '.txt')
-#     except Exception as ex:
-#         df = None
-#         print(ex, " at ", station)
-#     else:
-#         date_b = datetime.datetime.strptime(date_b, "%Y-%m-%d")
-#         date_e = datetime.datetime.strptime(date_e, "%Y-%m-%d")
-#         df = add_date_column_to_dataframe(df)
-#         df = df[(df["date"] >= date_b) & (df["date"] <= date_e)]
-#     return df
-
-
-# def create_intensity_frequency_table_of_period(actual, dir_data='./'):
-#     columns = ["int1", "int2", "int3", "int4", "int5", "int6", "int7"]
-#     stations = actual["station"].values
-#     cum_counts_s = []
-#     for i_station, station in enumerate(stations):
-#         if actual.at[i_station, "duration"] == 0:
-#             cum_counts = np.zeros(7)
-#         else:
-#             date_b = actual.at[i_station, "from"]
-#             date_e = actual.at[i_station, "to"]
-#             df = take_data_subset_by_period(station, date_b, date_e, dir_data)
-#             if df is not None:
-#                 cum_counts = count_intensity_in_dataframe(df)
-#             else:
-#                 cum_counts = np.zeros(7)
-#         cum_counts_s.append(cum_counts)
-#     df_c = pd.DataFrame(cum_counts_s, columns=columns)
-#     actual_res = pd.concat([actual, df_c], axis=1)
-#     actual_res_sum = actual_res.sum()
-#     actual_res_sum["station"] = actual_res.at[0, "station"]
-#     duration = actual_res_sum["duration"]
-#     frequency = actual_res_sum[columns]
-#     frequency = frequency[frequency > 0] / duration * 365.2425
-#     return frequency, actual_res_sum
-
-
 def find_regression_int_freq(frequency):
     freq_values = frequency.values
     n = len(freq_values)
@@ -189,8 +86,12 @@ def find_regression_int_freq(frequency):
     est7 = None
     est6 = None
     est6p5 = None
+    #
+    # Feb. 18, 2024, we changed the regression from intensity 1.
+    #
     try:
-        res = scipy.stats.linregress(ints[1:], lfreq[1:])
+        # res = scipy.stats.linregress(ints[1:], lfreq[1:])
+        res = scipy.stats.linregress(ints, lfreq)
     except Exception as ex:
         print(ex)
     else:
@@ -198,37 +99,6 @@ def find_regression_int_freq(frequency):
         est6 = 10 ** (res.intercept + res.slope * 6)
         est6p5 = 10 ** (res.intercept + res.slope * 6.5)
     return res, est7, est6, est6p5
-
-
-# def find_intensity_frequency_regression_summarize(
-#         meta, station, set_dict, dir_data='./'):
-#     available = find_available_periods(meta, station)
-#     actual = calc_periods_durations(available, set_dict)
-#     frequency, summary = \
-#         create_intensity_frequency_table_of_period(actual, dir_data)
-#     summary["from"] = summary["from"][:10]
-#     summary["to"] = summary["to"][-10:]
-#     summary["slope"] = np.nan
-#     summary["intercept"] = np.nan
-#     summary["rvalue"] = np.nan
-#     summary["est7"] = np.nan
-#     summary["est6p5"] = np.nan
-#     summary["est6"] = np.nan
-#     regression = None
-#     if len(frequency) > 2:
-#         regression, est7, est6, est6p5 = find_regression_int_freq(frequency)
-#         summary["slope"] = np.round(regression.slope, 3)
-#         summary["intercept"] = np.round(regression.intercept, 3)
-#         summary["rvalue"] = np.round(regression.rvalue, 3)
-#         summary["est7"] = round_to_k(est7, 3)
-#         summary["est6"] = round_to_k(est6, 3)
-#         summary["est6p5"] = round_to_k(est6p5, 3)
-#     return frequency, regression, summary
-
-
-################################################################################
-#    Considering the time up to seconds (TS)
-################################################################################
 
 
 def find_available_periods_ts(meta, station):
@@ -267,6 +137,7 @@ def calc_periods_intersection_ts(period_0, period_1):
 def calc_periods_durations_ts(df_available, set_period):
     available_periods = df_available[["from", "to"]].values
     set_period = list(set_period.values())
+    # print("calc_periods_duraions_ts, set_period = ", set_period)
     periods_durations = []
     for period in available_periods:
         b, e = calc_periods_intersection_ts(set_period, period)
@@ -281,6 +152,8 @@ def calc_periods_durations_ts(df_available, set_period):
     df = pd.DataFrame(periods_durations, columns=["from", "to", "duration"])
     df["station"] = df_available["station"]
     df = df[["station", "from", "to", "duration"]]
+    df = df[df["duration"] > 0]
+    df = df.reset_index(drop=True)
     return df
 
 
@@ -353,6 +226,18 @@ def create_intensity_frequency_table_of_period_ts(actual, dir_data='./'):
     return frequency, actual_res_sum
 
 
+def calc_latitude(lat):
+    lat = int(lat)
+    lat = str(lat)
+    return int(str[lat[:2]]) + float(str[lat[2:]]) / 60
+
+
+def calc_longitude(lon):
+    lon = int(lon)
+    lon = str(lon)
+    return int(str(lon[:3])) + float(str[lon[3:]]) / 60
+
+
 def find_intensity_frequency_regression_summarize_ts(
         meta, station, set_dict, dir_data='./'):
     meta_1 = meta[meta["code_prime"] == station]
@@ -361,8 +246,10 @@ def find_intensity_frequency_regression_summarize_ts(
     actual = calc_periods_durations_ts(available, set_dict)
     frequency, summary = \
         create_intensity_frequency_table_of_period_ts(actual, dir_data)
-    summary["from"] = summary["from"][:10]
-    summary["to"] = summary["to"][:10]
+    summary["latitude"] = calc_latitude(meta_1.at[0, "lat"])
+    summary["longitude"] = calc_longitude(meta_1.at[0, "lon"])
+    # summary["from"] = summary["from"]
+    # summary["to"] = summary["to"]
     summary["slope"] = np.nan
     summary["intercept"] = np.nan
     summary["rvalue"] = np.nan
@@ -526,7 +413,7 @@ def extract_quakes_by_intensities(
 
 
 def find_intensities(meta, station, intensities, dir_data="./"):
-    available = find_available_periods(meta, station)
+    available = find_available_periods_ts(meta, station)
     stations = available["station"]
     df_sub_s = []
     for station in stations:
@@ -546,36 +433,36 @@ def find_intensities(meta, station, intensities, dir_data="./"):
     return df_ext
 
 
-def screening_stations(meta, cond_dict, set_dict, dir_data='./'):
-    codes = meta["code_prime"].values
-    n_code = len(codes)
-    satisfied = np.ones(n_code)
-    est6s = np.zeros(n_code)
-    est7s = np.zeros(n_code)
-    for i_code, code in enumerate(codes):
-        if np.mod(i_code, 100) == 0:
-            print("Now processing {}/{}, number = {}".
-                  format(i_code, n_code, code))
-        available = find_available_periods(meta, code)
-        df = calc_periods_durations(available, set_dict)
-        if df['duration'].sum() < cond_dict["duration"] * 365.2425:
-            satisfied[i_code] = 0
-            continue
-        cum_counts = count_intensities(df, dir_data=dir_data)
-        index = "int" + str(cond_dict["intensity"])
-        if cum_counts[index].sum() == 0:
-            satisfied[i_code] = 0
-            continue
-        if satisfied[i_code] == 1:
-            frequency, actual_res_sum = \
-                create_intensity_frequency_table_of_period(df, dir_data)
-            res, est7, est6 = find_regression_int_freq(frequency)
-            est7s[i_code] = est7
-            est6s[i_code] = est6
-    summary = pd.DataFrame(
-        [satisfied, est7s, est6s], columns=["satisfied", "est7", "est6"])
-    print(summary)
-    return summary
+# def screening_stations(meta, cond_dict, set_dict, dir_data='./'):
+#     codes = meta["code_prime"].values
+#     n_code = len(codes)
+#     satisfied = np.ones(n_code)
+#     est6s = np.zeros(n_code)
+#     est7s = np.zeros(n_code)
+#     for i_code, code in enumerate(codes):
+#         if np.mod(i_code, 100) == 0:
+#             print("Now processing {}/{}, number = {}".
+#                   format(i_code, n_code, code))
+#         available = find_available_periods(meta, code)
+#         df = calc_periods_durations(available, set_dict)
+#         if df['duration'].sum() < cond_dict["duration"] * 365.2425:
+#             satisfied[i_code] = 0
+#             continue
+#         cum_counts = count_intensities(df, dir_data=dir_data)
+#         index = "int" + str(cond_dict["intensity"])
+#         if cum_counts[index].sum() == 0:
+#             satisfied[i_code] = 0
+#             continue
+#         if satisfied[i_code] == 1:
+#             frequency, actual_res_sum = \
+#                 create_intensity_frequency_table_of_period(df, dir_data)
+#             res, est7, est6 = find_regression_int_freq(frequency)
+#             est7s[i_code] = est7
+#             est6s[i_code] = est6
+#     summary = pd.DataFrame(
+#         [satisfied, est7s, est6s], columns=["satisfied", "est7", "est6"])
+#     print(summary)
+#     return summary
 
 
 ################################################################################
@@ -584,210 +471,54 @@ def screening_stations(meta, cond_dict, set_dict, dir_data='./'):
 #
 ################################################################################
 
-################################################################################
-#   Dates, Periods
-################################################################################
-
-# def organize_record_period_of_station(meta, code):
-#     str_b = meta['from']
-#     str_d = meta['to']
-#     meta['date_b'] = calc_date_beginning(str_b)
-#     meta['date_e'] = date_end_to_datetime(str_e)
-#     return meta
-
-
-def find_date_beginning(code, dfrom, date_beginning, dir_data='./'):
-    strfrom = str(dfrom)
-    year = strfrom[0:4]
-    month = strfrom[4:6]
-    day = strfrom[6:8]
-    if year == '9999':
-        dfrom, _ = find_operation_period_from_station_wise_data(
-            code, dir_data)
-    else:
-        if month == '99':
-            month = '01'
-        if day == '99':
-            day = '01'
-        dfrom = year + '-' + month + '-' + day
-    date_beginning_read = datetime.datetime.strptime(dfrom, "%Y-%m-%d")
-    date_beginning = datetime.datetime.strptime(date_beginning, "%Y-%m-%d")
-    if date_beginning_read > date_beginning:
-        date_beginning = date_beginning_read
-    return date_beginning
-
-
-def find_date_end(code, to, date_end, dir_data='./'):
-    if np.isnan(to):
-        return datetime.datetime.strptime(date_end, "%Y-%m-%d")
-    else:
-        strto = str(to)
-        year = strto[:4]
-        month = strto[4:6]
-        day = strto[6:8]
-    # print(strto)
-    if year == '9999':
-        _, end = find_operation_period_from_station_wise_data(
-            code, dir_data)
-    else:
-        if month == '99':
-            month = '12'
-        if day == '99':
-            day = '28'
-        end = year + '-' + month + '-' + day
-    date_end_read = datetime.datetime.strptime(end, "%Y-%m-%d")
-    date_end = datetime.datetime.strptime(date_end, "%Y-%m-%d")
-    if date_end_read < date_end:
-        date_end = date_end_read
-    return date_end
-
-
-def find_operation_period_from_station_wise_data(code, dir_data):
-    fn = dir_data + 'st_' + str(code) + '.txt'
-    df = pd.read_csv(fn)
-    beginning = str(df['year'].min()) + '-01-01'
-    end = str(df['year'].max()) + '-12-31'
-    return beginning, end
-
-
-def calc_date_b_date_e_duration(
-        meta_in, date_beginning, date_end, dir_data='./'):
-    meta = meta_in.copy()
-    codes = list(meta['code'])
-    for i_code, code in enumerate(codes):
-        date_b = find_date_beginning(
-            code, meta.at[i_code, 'from'], date_beginning, dir_data)
-        date_e = find_date_end(
-            code, meta.at[i_code, 'to'], date_end, dir_data)
-        meta.at[i_code, 'date_b'] = date_b
-        meta.at[i_code, 'date_e'] = date_e
-        meta.at[i_code, 'duration'] = (date_e - date_b).days / 365.2425
-    return meta
-
-
-# def calc_date_b_date_e_duration_old(meta, date_beginning, date_end):
-#     meta = calc_date_beginning(meta)
-#     meta = calc_date_end(meta)
-#     meta.loc[:, 'beginning'] = datetime.datetime.strptime(
-#         date_beginning, "%Y-%m-%d")
-#     meta.loc[:, 'end'] = datetime.datetime.strptime(date_end, "%Y-%m-%d")
-#     meta['date_b_sub'] = meta[['date_b', 'beginning']].max(axis=1)
-#     meta['date_e_sub'] = meta[['date_e', 'end']].min(axis=1)
-#     # codes = list(meta['code'])
-#     # for i_code, code in enumerate(codes):
-#     #     a = meta.at[i_code, 'date_e_sub']
-#     #     if np.isnan(a):
-#     #         print("date_e is nan at {}".format(i_code))
-#     meta['duration'] = (meta['date_e_sub'] - meta['date_b_sub']) / \
-#                        np.timedelta64(1, 'Y')
-#     return meta
-#
-#
-#
-# def datetime_from_to(meta):
-#     meta = calc_date_beginning(meta)
-#     meta = calc_date_end(meta)
-#     return meta
-#
-#
-# def calc_date_beginning(df):
-#     dt_earliest = datetime.datetime(1919, 1, 1)
-#     codes = list(df['code'])
-#     for i_code, code in enumerate(codes):
-#         # print(i_code)
-#         # print(df.at[i_code, 'from'])
-#         strdt = str(df.at[i_code, 'from'])[:8]
-#         # print(strdt)
-#         dt_beginning = date_beginning_to_datetime(strdt)
-#         try:
-#             if dt_beginning < dt_earliest:
-#                 dt_beginning = dt_earliest
-#                 # print(i_code, 'dt_b < dt_e')
-#             df.at[i_code, 'date_b'] = dt_beginning
-#             # print(i_code, dt_beginning)
-#         except:
-#             df.at[i_code, 'date_b'] = pd.NaT
-#             # print(i_code, df.at[i_code, 'date_b'])
-#     return df
-#
-#
-# def calc_date_end(df):
-#     codes = list(df['code'])
-#     for i_code, code in enumerate(codes):
-#         if np.isnan(df.at[i_code, 'to']):
-#             df.at[i_code, 'date_e'] = datetime.datetime(2019, 12, 31)
-#         else:
-#             dt_end = date_end_to_datetime(str(df.at[i_code, 'to']))
-#             df.at[i_code, 'date_e'] = dt_end
-#     return df
-#
-#
-# def date_beginning_to_datetime(strdt):
-#     year = strdt[:4]
-#     month = strdt[4:6]
-#     day = strdt[6:8]
-#     # time = strdt[8:12]
-#     if year == '9999':
-#         return np.nan
-#     else:
-#         if month == '99':
-#             month = '01'
-#         if day == '99':
-#             day = '01'
-#         # if time == '9999':
-#         #     time = '0000'
-#         dt = datetime.datetime.strptime(year + month + day, '%Y%m%d')
-#         return dt
-#
-#
-# def date_end_to_datetime(strdt):
-#     year = strdt[:4]
-#     month = strdt[4:6]
-#     day = strdt[6:8]
-#     # time = strdt[8:12]
-#     if year == '9999':
-#         return np.nan
-#     else:
-#         if month == '99':
-#             month = '12'
-#         if day == '99':
-#             day = '28'
-#         # if time == '9999':
-#         #     time = '2359'
-#         dt = datetime.datetime.strptime(year + month + day, '%Y%m%d')
-#         return dt
 
 
 ###############################################################################
 #   Intervals
 ################################################################################
 
-def calc_intervals(dir_data, code, beginning='1919-01-01', end='2100-12-31'):
-    print(dir_data, code, beginning, end)
-    try:
-        d7, d6, d5, d4, d3, d2, d1 = create_subdfs_by_intensities(
-            code, beginning=beginning, end=end,
-            dir_data=dir_data)
-        # print(d4)
-    except ValueError as ve:
-        print(code, 'cannot be read.', ve)
-        # st.dfoc['rawc'] = np.nan
-        # st.dfoc['aasc'] = np.nan
-    except TypeError as te:
-        print(code, 'cannot be read.', te)
-        # st.dfoc['rawc'] = np.nan
-        # st.dfoc['aasc'] = np.nan
+
+def create_interval_datasets_ts(df_org, code_prime, set_dict, dir_data):
+    df_org_1 = df_org[df_org["code_prime"] == code_prime]
+    df_org_1 = df_org_1.reset_index(drop=True)
+    gaps = df_org_1.at[0, "gaps"]
+    if type(gaps) is str:
+        gaps = eval(gaps)
+    if len(gaps) > 0:
+        for gap in gaps:
+            if gap > 0:
+                print("There is a positive gap. Avoid using this station.")
+    available = find_available_periods_meta_1_ts(df_org_1)
+    actual = calc_periods_durations_ts(available, set_dict)
+    # print("create_interval_dataset_ts available = ", available)
+    # print("create_interval_dataset_ts actual = ", actual)
+    stations = list(actual["station"])
+    dfs = pd.DataFrame()
+    for station in stations:
+        df = pd.read_csv(dir_data + "st_" + str(station) + ".txt")
+        dfs = pd.concat([dfs, df])
+    dfs = dfs.reset_index(drop=True)
+    datetime_b = actual.at[0, "from"]
+    datetime_e = actual.at[len(actual) - 1, "to"]
+    # print("datetime_e in create_intervals_datasets_ts", datetime_e)
+    # time.sleep(1)
+    dfis = calc_intervals(dfs, datetime_b, datetime_e)
+    return dfis
+    
+
+def calc_intervals(df_st, beginning, end):
+    df_st = df_st.reset_index(drop=True)
+    d7, d6, d5, d4, d3, d2, d1 = create_subdfs_by_intensities_essentials(
+        df_st, beginning, end)
     dfis = []
     for i in range(5):
         intensity = i + 1
-        # print(intensity)
         df = eval('d' + str(intensity))
-        df['date'] = pd.to_datetime(df[['year', 'month', 'day']])
-        df['diff'] = df['date'].diff() / np.timedelta64(1, "D")
+        df['diff'] = df['date_time'].diff() / np.timedelta64(1, "D")
         intervals = (np.array(df['diff']).astype(np.float64))[1:]
         intervals = np.sort(intervals)
         n = len(intervals)
-        suvf = 1 - (np.arange(n) + 1) / (n + 1)
+        suvf = 1 - np.arange(n) / n
         counts = n - np.arange(n)
         dfi = pd.DataFrame()
         dfi['interval'] = intervals
@@ -797,71 +528,39 @@ def calc_intervals(dir_data, code, beginning='1919-01-01', end='2100-12-31'):
     return dfis
 
 
-def calc_intervals_n_raw_counts(
-        dir_data, code, beginning='1919-01-01', end='2019-12-31'):
-    # print(dir_data, code, beginning, end)
-    try:
-        d7, d6, d5, d4, d3, d2, d1 = create_subdfs_by_intensities(
-            code, beginning=beginning, end=end,
-            dir_data=dir_data)
-        # print(d4)
-    except ValueError as ve:
-        print(code, 'cannot be read.', ve)
-        # st.dfoc['rawc'] = np.nan
-        # st.dfoc['aasc'] = np.nan
-    except TypeError as te:
-        print(code, 'cannot be read.', te)
-        # st.dfoc['rawc'] = np.nan
-        # st.dfoc['aasc'] = np.nan
-    dfis = []
-    n_raws = []
-    for i in range(7):
-        intensity = i + 1
-        # print(intensity)
-        df = eval('d' + str(intensity))
-        if df is not None:
-            n_raws.append(len(df))
-            df['date'] = pd.to_datetime(df[['year', 'month', 'day']])
-            df['diff'] = df['date'].diff() / np.timedelta64(1, "D")
-            intervals = (np.array(df['diff']).astype(np.float64))[1:]
-            intervals = np.sort(intervals)
-            n = len(intervals)
-            suv_f = 1 - (np.arange(n) + 1) / (n + 1)
-            counts = n - np.arange(n)
-            dfi = pd.DataFrame()
-            dfi['interval'] = intervals
-            dfi['suvf'] = suv_f
-            dfi['counts'] = counts
-            dfis.append(dfi)
-        else:
-            n_raws.append(0)
-            dfis.append(None)
-    return dfis, n_raws
-
-
-def calc_regression_intervals(dfis, reg_thres, upto=5):
-    results = []
-    for i in range(upto):
-        dfi = dfis[i]
-        reg_l = int(reg_thres[i, 0])
-        reg_u = int(reg_thres[i, 1])
-        dfi['interval'].astype(int)
-        dfisel = dfi[dfi['interval'] >= reg_l]
-        dfisel = dfisel[dfisel['interval'] <= reg_u]
-        n_reg = len(dfisel)
-        if n_reg < 3:
-            print('Counts are not enough for linear regression.')
-            results.append(None)
-        else:
-            log10suvf = np.log10(np.array(dfisel['suvf']).astype(np.float64))
-            results.append(
-                scipy.stats.linregress(dfisel['interval'], log10suvf))
-    return results
+def create_subdfs_by_intensities_essentials(df_st, beginning, end_t):
+    df = add_datetime_column_to_dataframe(df_st)
+    if type(beginning) is str:
+        # print(beginning)
+        beginning = datetime.datetime.strptime(beginning, "%Y-%m-%d %H:%M:%S")
+    if type(end_t) is str:
+        # print(end_t, type(end_t))
+        end_t = datetime.datetime.strptime(end_t, "%Y-%m-%d %H:%M:%S")
+    df = df[df['date_time'] >= beginning]
+    df = df[df['date_time'] <= end_t]
+    df['intensity'] = df['intensity'].astype(str)
+    df = df.reset_index(drop=True)
+    l7 = ['7']
+    l6 = ['6', '7', 'C', 'D']
+    l5 = ['5', '6', '7', 'A', 'B', 'C', 'D']
+    l4 = ['4', '5', '6', '7', 'A', 'B', 'C', 'D']
+    l3 = ['3', '4', '5', '6', '7', 'A', 'B', 'C', 'D']
+    l2 = ['2', '3', '4', '5', '6', '7', 'A', 'B', 'C', 'D']
+    l1 = ['1', '2', '3', '4', '5', '6', '7', 'A', 'B', 'C', 'D']
+    d7 = df[df['intensity'].isin(l7)]
+    d6 = df[df['intensity'].isin(l6)]
+    d5 = df[df['intensity'].isin(l5)]
+    d4 = df[df['intensity'].isin(l4)]
+    d3 = df[df['intensity'].isin(l3)]
+    d2 = df[df['intensity'].isin(l2)]
+    d1 = df[df['intensity'].isin(l1)]
+    return d7, d6, d5, d4, d3, d2, d1
 
 
 ###############################################################################
 #   Longitude, Latitude
 ################################################################################
+
 
 def calc_latitude(lat):
     lat = str(lat)
@@ -913,78 +612,170 @@ def calc_range_latlon(meta, include_all_japan_lands):
     return lal, lau, lol, lou
 
 
-################################################################################
-#   Analyze counts at intensities, with or without considering the aftershocks
-################################################################################
+# def calc_intervals_n_raw_counts(
+#         dir_data, code, beginning='1919-01-01', end='2019-12-31'):
+#     # print(dir_data, code, beginning, end)
+#     try:
+#         d7, d6, d5, d4, d3, d2, d1 = create_subdfs_by_intensities(
+#             code, beginning=beginning, end=end,
+#             dir_data=dir_data)
+#         # print(d4)
+#     except ValueError as ve:
+#         print(code, 'cannot be read.', ve)
+#         # st.dfoc['rawc'] = np.nan
+#         # st.dfoc['aasc'] = np.nan
+#     except TypeError as te:
+#         print(code, 'cannot be read.', te)
+#         # st.dfoc['rawc'] = np.nan
+#         # st.dfoc['aasc'] = np.nan
+#     dfis = []
+#     n_raws = []
+#     for i in range(7):
+#         intensity = i + 1
+#         # print(intensity)
+#         df = eval('d' + str(intensity))
+#         if df is not None:
+#             n_raws.append(len(df))
+#             df['date'] = pd.to_datetime(df[['year', 'month', 'day']])
+#             df['diff'] = df['date'].diff() / np.timedelta64(1, "D")
+#             intervals = (np.array(df['diff']).astype(np.float64))[1:]
+#             intervals = np.sort(intervals)
+#             n = len(intervals)
+#             suv_f = 1 - (np.arange(n) + 1) / (n + 1)
+#             counts = n - np.arange(n)
+#             dfi = pd.DataFrame()
+#             dfi['interval'] = intervals
+#             dfi['suvf'] = suv_f
+#             dfi['counts'] = counts
+#             dfis.append(dfi)
+#         else:
+#             n_raws.append(0)
+#             dfis.append(None)
+#     return dfis, n_raws
 
-def create_subdfs_by_intensities_new(
-        station, beginning, end, dir_data='./'):
-    file2read = dir_data + 'st_' + str(station) + '.txt'
-    try:
-        df = pd.read_csv(file2read)
-    except Exception as ex:
-        print('Empty data at ', station, ex)
-        return None
-    df = df[df['day'] != "  "]
-    df.loc[df['day'] == '//', 'day'] = 15
-    df = df.drop(df[df.day == '00'].index)
-    df['date'] = pd.to_datetime(df[['year', 'month', 'day']])
-    # beginning_dt = datetime.datetime.strptime(beginning, "%Y-%m-%d")
-    # end_dt = datetime.datetime.strptime(end, "%Y-%m-%d")
-    df = df[df['date'] > beginning]
-    df = df[df['date'] < end]
-    df['intensity'] = df['intensity'].astype(str)
-    df = df.reset_index(drop=True)
-    l7 = ['7']
-    l6 = ['6', '7', 'C', 'D']
-    l5 = ['5', '6', '7', 'A', 'B', 'C', 'D']
-    l4 = ['4', '5', '6', '7', 'A', 'B', 'C', 'D']
-    l3 = ['3', '4', '5', '6', '7', 'A', 'B', 'C', 'D']
-    l2 = ['2', '3', '4', '5', '6', '7', 'A', 'B', 'C', 'D']
-    l1 = ['1', '2', '3', '4', '5', '6', '7', 'A', 'B', 'C', 'D']
-    d7 = df[df['intensity'].isin(l7)]
-    d6 = df[df['intensity'].isin(l6)]
-    d5 = df[df['intensity'].isin(l5)]
-    d4 = df[df['intensity'].isin(l4)]
-    d3 = df[df['intensity'].isin(l3)]
-    d2 = df[df['intensity'].isin(l2)]
-    d1 = df[df['intensity'].isin(l1)]
-    return d7, d6, d5, d4, d3, d2, d1
+
+# def calc_regression_intervals(dfis, reg_thres, upto=5):
+#     results = []
+#     for i in range(upto):
+#         dfi = dfis[i]
+#         reg_l = int(reg_thres[i, 0])
+#         reg_u = int(reg_thres[i, 1])
+#         dfi['interval'].astype(int)
+#         dfisel = dfi[dfi['interval'] >= reg_l]
+#         dfisel = dfisel[dfisel['interval'] <= reg_u]
+#         n_reg = len(dfisel)
+#         if n_reg < 3:
+#             print('Counts are not enough for linear regression.')
+#             results.append(None)
+#         else:
+#             log10suvf = np.log10(np.array(dfisel['suvf']).astype(np.float64))
+#             results.append(
+#                 scipy.stats.linregress(dfisel['interval'], log10suvf))
+#     return results
 
 
-def create_subdfs_by_intensities(
-        station, beginning='1919-01-01', end='2019-12-31', dir_data='./'
-):
-    file2read = dir_data + 'st_' + str(station) + '.txt'
-    try:
-        df = pd.read_csv(file2read)
-    except Exception as ex:
-        print('Empty data at ', station, ex)
-        return None
-    df.loc[df['day'] == '//', 'day'] = 15
-    df = df.drop(df[df.day == '00'].index)
-    df['date'] = pd.to_datetime(df[['year', 'month', 'day']])
-    beginning_dt = datetime.datetime.strptime(beginning, "%Y-%m-%d")
-    end_dt = datetime.datetime.strptime(end, "%Y-%m-%d")
-    df = df[df['date'] > beginning_dt]
-    df = df[df['date'] < end_dt]
-    df['intensity'] = df['intensity'].astype(str)
-    df = df.reset_index(drop=True)
-    l7 = ['7']
-    l6 = ['6', '7', 'C', 'D']
-    l5 = ['5', '6', '7', 'A', 'B', 'C', 'D']
-    l4 = ['4', '5', '6', '7', 'A', 'B', 'C', 'D']
-    l3 = ['3', '4', '5', '6', '7', 'A', 'B', 'C', 'D']
-    l2 = ['2', '3', '4', '5', '6', '7', 'A', 'B', 'C', 'D']
-    l1 = ['1', '2', '3', '4', '5', '6', '7', 'A', 'B', 'C', 'D']
-    d7 = df[df['intensity'].isin(l7)]
-    d6 = df[df['intensity'].isin(l6)]
-    d5 = df[df['intensity'].isin(l5)]
-    d4 = df[df['intensity'].isin(l4)]
-    d3 = df[df['intensity'].isin(l3)]
-    d2 = df[df['intensity'].isin(l2)]
-    d1 = df[df['intensity'].isin(l1)]
-    return d7, d6, d5, d4, d3, d2, d1
+
+
+# def create_subdfs_by_intensities_ts(
+#         station, beginning, end, dir_data):
+#     file2read = dir_data + 'st_' + str(station) + '.txt'
+#     try:
+#         df = pd.read_csv(file2read)
+#     except Exception as ex:
+#         print('Empty data at ', station, ex)
+#         return None
+#     df = add_datetime_column_to_dataframe(df)
+#     beginning_dt = datetime.datetime.strptime(beginning, "%Y-%m-%d %H:%M:%S")
+#     end_dt = datetime.datetime.strptime(end, "%Y-%m-%d %H:%M:%S")
+#     df = df[df['date_time'] >= beginning_dt]
+#     df = df[df['date_time'] <= end_dt]
+#     df['intensity'] = df['intensity'].astype(str)
+#     df = df.reset_index(drop=True)
+#     l7 = ['7']
+#     l6 = ['6', '7', 'C', 'D']
+#     l5 = ['5', '6', '7', 'A', 'B', 'C', 'D']
+#     l4 = ['4', '5', '6', '7', 'A', 'B', 'C', 'D']
+#     l3 = ['3', '4', '5', '6', '7', 'A', 'B', 'C', 'D']
+#     l2 = ['2', '3', '4', '5', '6', '7', 'A', 'B', 'C', 'D']
+#     l1 = ['1', '2', '3', '4', '5', '6', '7', 'A', 'B', 'C', 'D']
+#     d7 = df[df['intensity'].isin(l7)]
+#     d6 = df[df['intensity'].isin(l6)]
+#     d5 = df[df['intensity'].isin(l5)]
+#     d4 = df[df['intensity'].isin(l4)]
+#     d3 = df[df['intensity'].isin(l3)]
+#     d2 = df[df['intensity'].isin(l2)]
+#     d1 = df[df['intensity'].isin(l1)]
+#     return d7, d6, d5, d4, d3, d2, d1
+
+
+# def create_subdfs_by_intensities_new(
+#         station, beginning, end, dir_data='./'):
+#     file2read = dir_data + 'st_' + str(station) + '.txt'
+#     try:
+#         df = pd.read_csv(file2read)
+#     except Exception as ex:
+#         print('Empty data at ', station, ex)
+#         return None
+#     df = df[df['day'] != "  "]
+#     df.loc[df['day'] == '//', 'day'] = 15
+#     df = df.drop(df[df.day == '00'].index)
+#     df['date'] = pd.to_datetime(df[['year', 'month', 'day']])
+#     # beginning_dt = datetime.datetime.strptime(beginning, "%Y-%m-%d")
+#     # end_dt = datetime.datetime.strptime(end, "%Y-%m-%d")
+#     df = df[df['date'] > beginning]
+#     df = df[df['date'] < end]
+#     df['intensity'] = df['intensity'].astype(str)
+#     df = df.reset_index(drop=True)
+#     l7 = ['7']
+#     l6 = ['6', '7', 'C', 'D']
+#     l5 = ['5', '6', '7', 'A', 'B', 'C', 'D']
+#     l4 = ['4', '5', '6', '7', 'A', 'B', 'C', 'D']
+#     l3 = ['3', '4', '5', '6', '7', 'A', 'B', 'C', 'D']
+#     l2 = ['2', '3', '4', '5', '6', '7', 'A', 'B', 'C', 'D']
+#     l1 = ['1', '2', '3', '4', '5', '6', '7', 'A', 'B', 'C', 'D']
+#     d7 = df[df['intensity'].isin(l7)]
+#     d6 = df[df['intensity'].isin(l6)]
+#     d5 = df[df['intensity'].isin(l5)]
+#     d4 = df[df['intensity'].isin(l4)]
+#     d3 = df[df['intensity'].isin(l3)]
+#     d2 = df[df['intensity'].isin(l2)]
+#     d1 = df[df['intensity'].isin(l1)]
+#     return d7, d6, d5, d4, d3, d2, d1
+
+
+# def create_subdfs_by_intensities(
+#         station, beginning='1919-01-01', end='2019-12-31', dir_data='./'
+# ):
+#     file2read = dir_data + 'st_' + str(station) + '.txt'
+#     try:
+#         df = pd.read_csv(file2read)
+#     except Exception as ex:
+#         print('Empty data at ', station, ex)
+#         return None
+#     df.loc[df['day'] == '//', 'day'] = 15
+#     df = df.drop(df[df.day == '00'].index)
+#     df['date'] = pd.to_datetime(df[['year', 'month', 'day']])
+#     beginning_dt = datetime.datetime.strptime(beginning, "%Y-%m-%d")
+#     end_dt = datetime.datetime.strptime(end, "%Y-%m-%d")
+#     df = df[df['date'] > beginning_dt]
+#     df = df[df['date'] < end_dt]
+#     df['intensity'] = df['intensity'].astype(str)
+#     df = df.reset_index(drop=True)
+#     l7 = ['7']
+#     l6 = ['6', '7', 'C', 'D']
+#     l5 = ['5', '6', '7', 'A', 'B', 'C', 'D']
+#     l4 = ['4', '5', '6', '7', 'A', 'B', 'C', 'D']
+#     l3 = ['3', '4', '5', '6', '7', 'A', 'B', 'C', 'D']
+#     l2 = ['2', '3', '4', '5', '6', '7', 'A', 'B', 'C', 'D']
+#     l1 = ['1', '2', '3', '4', '5', '6', '7', 'A', 'B', 'C', 'D']
+#     d7 = df[df['intensity'].isin(l7)]
+#     d6 = df[df['intensity'].isin(l6)]
+#     d5 = df[df['intensity'].isin(l5)]
+#     d4 = df[df['intensity'].isin(l4)]
+#     d3 = df[df['intensity'].isin(l3)]
+#     d2 = df[df['intensity'].isin(l2)]
+#     d1 = df[df['intensity'].isin(l1)]
+#     return d7, d6, d5, d4, d3, d2, d1
 
 
 def count_considering_aftershocks(df, intensity, remiflt):
@@ -1146,6 +937,178 @@ def create_figure_intensity_vs_occurrence(
     return fig, ax
 
 
+###############################################################################
+# Fore-aftershock-swarm correction
+###############################################################################
+
+
+def fit_to_first_linear_part(ints_ot, suvf_ot):
+    # print(ints_ot, suvf_ot)
+    n_ot = len(ints_ot)
+    # print(n_ot)
+    if n_ot < 6:
+        return reg_min, factor
+    sums = np.zeros(len(ints_ot) - 6)
+    reg_0s = []
+    count = 0
+    for i_sep in range(n_ot - 6):
+        n_sep = i_sep + 3
+        count += 1
+        reg_0 = scipy.stats.linregress(ints_ot[:n_sep], np.log10(suvf_ot[:n_sep]))
+        # print(reg_0.intercept)
+        reg_1 = scipy.stats.linregress(ints_ot[n_sep:], np.log10(suvf_ot[n_sep:]))
+        sum_0 = ((np.log10(suvf_ot[:n_sep]) - \
+                    (reg_0.intercept + reg_0.slope * ints_ot[:n_sep])) ** 2).sum()
+        sum_1 = ((np.log10(suvf_ot[n_sep:]) - \
+                    (reg_1.intercept + reg_1.slope * ints_ot[n_sep:])) ** 2).sum()
+        sums[i_sep] = sum_0 + sum_1
+        reg_0s.append(reg_0)
+    sums = np.array(sums)
+    i_min = np.argmin(sums)
+    reg_min = reg_0s[i_min]
+    factor = 10 ** reg_min.intercept
+    return reg_min, factor
+
+
+def find_correction_factor_internsity(intervals, suvf, thres):
+    ser = pd.Series()
+    intervals = np.array(intervals)
+    suvf = np.array(suvf)
+    overthres = intervals[intervals > thres]
+    n_intervals = len(intervals)
+    n_overthres = len(overthres)
+    oversuvf = suvf[-n_overthres:]
+    ser["factor"] = 0
+    ser["intercept"] = np.nan
+    ser["slope"] = np.nan
+    ser["rvalue"] = np.nan
+    if n_intervals == 0:
+        return ser
+    if n_overthres > 10:
+        reg, factor = fit_to_first_linear_part(overthres, oversuvf)
+        ser["intercept"] = reg.intercept
+        ser["slope"] = reg.slope
+        ser["rvalue"] = reg.rvalue
+        if factor < 1:
+            ser["factor"] = factor
+        elif factor > 1:
+            ser["factor"] = 1
+    elif n_overthres > 5:
+        reg = scipy.stats.linregress(overthres, np.log10(oversuvf))
+        factor = 10 ** reg.intercept
+        if factor < 1:
+            ser["factor"] = factor
+            ser["intercept"] = reg.intercept
+            ser["slope"] = reg.slope
+            ser["rvalue"] = reg.rvalue
+        elif factor >= 1:
+            if n_intervals > 1:
+                factor = (n_overthres + 1) / (n_intervals + 1) 
+                ser["factor"] = factor
+    else:
+        factor = (n_overthres + 1) / (n_intervals + 1)
+        ser["factor"] = factor
+    return ser
+
+
+def find_correction_factor_internsity_old(intervals, suvf, thres):
+    ser = pd.Series()
+    intervals = np.array(intervals)
+    suvf = np.array(suvf)
+    overthres = intervals[intervals > thres]
+    n_intervals = len(intervals)
+    n_overthres = len(overthres)
+    oversuvf = suvf[-n_overthres:]
+    ser["factor"] = 0
+    ser["intercept"] = np.nan
+    ser["slope"] = np.nan
+    ser["rvalue"] = np.nan
+    if n_intervals == 0:
+        return ser
+    if n_overthres > 3:
+        reg = scipy.stats.linregress(overthres, np.log10(oversuvf))
+        factor = 10 ** reg.intercept
+        if factor < 1:
+            ser["factor"] = factor
+            ser["intercept"] = reg.intercept
+            ser["slope"] = reg.slope
+            ser["rvalue"] = reg.rvalue
+        elif factor >= 1:
+            if n_intervals > 1:
+                factor = (n_overthres + 1) / (n_intervals + 1) 
+                ser["factor"] = factor
+    else:
+        factor = (n_overthres + 1) / (n_intervals + 1)
+        ser["factor"] = factor
+    return ser
+
+
+def find_correction_factor(dfs_intervals, thres_int=[4,8,16,32]):
+    series = []
+    for i_int, intensity in enumerate([1, 2, 3, 4]):
+        df_intervals = dfs_intervals[intensity - 1]
+        intervals = df_intervals["interval"]
+        suvf = df_intervals["suvf"]
+        thres = thres_int[i_int]
+        ser = find_correction_factor_internsity(intervals, suvf, thres)
+        series.append(ser)
+    df = pd.concat(series, axis=1).transpose()
+    return df
+
+
+def calc_corrected_frequency(df_factor, frequency):
+    df_int = pd.DataFrame()
+    df_int["intensity"] = np.arange(7) + 1
+    df_r = df_factor[df_factor["factor"] > 0]
+    factor = df_r["factor"].values
+    n = min(len(df_r), len(frequency))
+    a = np.empty((7, 2))
+    a[:] = np.nan
+    df_freq = pd.DataFrame(a, columns=["frequency", "corrected"])
+    n_freq = len(frequency)
+    df_freq["frequency"][:n_freq] = frequency
+    df_freq["corrected"][:n] = factor[:n] * frequency[:n] 
+    df_factor = pd.concat([df_int, df_factor, df_freq], axis=1)
+    return df_factor
+
+# WE NEED refactoring here, complex.
+
+def add_corrected_results_to_summary(summary, df_corrected):
+    # print(summary)
+    # print(df_corrected)
+    summary["corrected"] = df_corrected["corrected"]
+    df_sel = df_corrected[df_corrected["corrected"] > 0]
+    corrected = df_sel["corrected"].values
+    intensity = df_sel["intensity"].values
+    n = len(corrected)
+    summary["slope_cor"] = np.nan
+    summary["intercept_cor"] = np.nan
+    summary["rvalue_cor"] = np.nan
+    summary["est7_cor"] = np.nan
+    summary["est6p5_cor"] = np.nan
+    summary["est6"] = np.nan
+    if len(corrected) >= 3:
+        reg = scipy.stats.linregress(intensity, np.log10(corrected))
+        summary["slope_cor"] = reg.slope
+        summary["intercept_cor"] = reg.intercept
+        summary["rvalue_cor"] = reg.rvalue
+        summary["est7_cor"] = 10 ** (reg.intercept + reg.slope * 7)
+        summary["est6p5_cor"] = 10 ** (reg.intercept + reg.slope * 6.5)
+        summary["est6_cor"] = 10 ** (reg.intercept + reg.slope * 6)
+    return summary
+
+
+def do_aftershock_correction(df_org, station_prime, set_dict, dir_data):
+    dfs_intervals = create_interval_datasets_ts(
+        df_org, station_prime, set_dict, dir_data)
+    frequency, regression, summary = \
+        find_intensity_frequency_regression_summarize_ts(
+            df_org, station_prime, set_dict, dir_data=dir_data)
+    frequency = np.array(frequency.astype(np.float64))
+    df_factor = find_correction_factor(dfs_intervals)  #thres_int=[5, 10, 20, 40]
+    df_corrected = calc_corrected_frequency(df_factor, frequency)
+    summary_corrected = add_corrected_results_to_summary(summary, df_corrected)
+    return dfs_intervals, df_corrected, summary_corrected
 
 
 def main():
