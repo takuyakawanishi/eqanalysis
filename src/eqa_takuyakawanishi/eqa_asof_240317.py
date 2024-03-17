@@ -264,6 +264,17 @@ def create_intensity_ro_table_of_period_ts(actual, dir_data='./'):
     return ro, actual_res_sum
 
 
+def calc_latitude(lat):
+    lat = int(lat)
+    lat = str(lat)
+    return int(str[lat[:2]]) + float(str[lat[2:]]) / 60
+
+
+def calc_longitude(lon):
+    lon = int(lon)
+    lon = str(lon)
+    return int(str(lon[:3])) + float(str[lon[3:]]) / 60
+
 # def find_intensity_frequency_regression_summarize_ts(
 #         meta, station, set_dict, dir_data='./'):
 #     return find_intensity_ro_regression_summarize_ts(\
@@ -290,6 +301,10 @@ def find_intensity_ro_regression_summarize_ts(
     summary["pvalue"] = np.nan
     summary["est6p5"] = np.nan
     regression = None
+    #
+    # TODO 
+    # change following to IROR based one.
+    # Or move the regression altogether to ..._summarize_ts(),
     #
     if len(ro) > 2:
         regression, est7, est6, est6p5 = find_regression_int_freq(ro)
@@ -562,6 +577,88 @@ def create_interval_datasets_ts(df_org, code_prime, set_dict, dir_data):
     return dfis
 
 
+
+# def calc_intervals_upto_intensity_4(df_st, beginning, end):
+#     df_st = df_st.reset_index(drop=True)
+#     d7, d6, d5, d4, d3, d2, d1 = create_subdfs_by_intensities_essentials(
+#         df_st, beginning, end)
+#     dfis = []
+#     for i in range(4):
+#         intensity = i + 1
+#         df = eval('d' + str(intensity))
+#         df['diff'] = df['date_time'].diff() / np.timedelta64(1, "D")
+#         intervals = (np.array(df['diff']).astype(np.float64))[1:]
+#         n = len(intervals)
+#         dfi = pd.DataFrame()
+#         dfi['interval'] = intervals
+#         dfis.append(dfi)
+#     return dfis
+
+# def find_number_of_positive_gaps(gaps):
+#     if type(gaps) is str:
+#         gaps = eval(gaps)
+#     # print(gaps  )
+#     count = 0
+#     for i, gap in enumerate(gaps):
+#         # print("gap  and type(gap) = ", gap, type(gap))
+#         if gap > 0:
+#             count +=1
+#     return count
+
+
+
+
+# def create_interval_datasets_ts_old(df_org, code_prime, set_dict, dir_data):
+#     df_org_1 = df_org[df_org["code_prime"] == code_prime]
+#     df_org_1 = df_org_1.reset_index(drop=True)
+#     gaps = df_org_1.at[0, "gaps"]
+#     if type(gaps) is str:
+#         gaps = eval(gaps)
+#     if len(gaps) > 0:
+#         for gap in gaps:
+#             if gap > 0:
+#                 print("There is a positive gap. Avoid using this station.")
+
+#     available = find_available_periods_meta_1_ts(df_org_1)
+#     actual = calc_periods_durations_ts(available, set_dict)
+#     # print(actual)
+#     stations = list(actual["station"])
+#     #
+#     # If no gaps
+#     # 
+#     dfs = pd.DataFrame()
+#     for station in stations:
+#         df = pd.read_csv(dir_data + "st_" + str(station) + ".txt")
+#         dfs = pd.concat([dfs, df])
+#     dfs = dfs.reset_index(drop=True)
+#     datetime_b = actual.at[0, "from"]
+#     datetime_e = actual.at[len(actual) - 1, "to"]
+#     dfis = calc_intervals(dfs, datetime_b, datetime_e)
+#     return dfis
+    
+
+# def calc_intervals(df_st, beginning, end):
+#     df_st = df_st.reset_index(drop=True)
+#     d7, d6, d5, d4, d3, d2, d1 = create_subdfs_by_intensities_essentials(
+#         df_st, beginning, end)
+#     dfis = []
+#     for i in range(4):
+#         intensity = i + 1
+#         df = eval('d' + str(intensity))
+#         df['diff'] = df['date_time'].diff() / np.timedelta64(1, "D")
+#         intervals = (np.array(df['diff']).astype(np.float64))[1:]
+#         intervals = np.sort(intervals)
+#         n = len(intervals)
+#         suvf = 1 - np.arange(n) / n
+#         counts = n - np.arange(n)
+#         dfi = pd.DataFrame()
+#         dfi['interval'] = intervals
+#         dfi['suvf'] = suvf
+#         dfi['counts'] = counts
+#         dfis.append(dfi)
+#     return dfis
+
+
 def create_subdfs_by_intensities_essentials(df_st, beginning, end_t):
     df = add_datetime_column_to_dataframe(df_st)
     if type(beginning) is str:
@@ -648,6 +745,49 @@ def calc_range_latlon(meta, include_all_japan_lands):
     return lal, lau, lol, lou
 
 
+# def count_considering_aftershocks(df, intensity, remiflt):
+#     n_raw_count = len(df)
+#     df.loc[df['day'] == '//', 'day'] = 15
+#     # df.loc[df['day'] == '00', 'day'] = 15
+#     df['diff'] = df['date'].diff() / np.timedelta64(1, "D")
+#     dfrem = df[df['diff'] < remiflt[str(intensity)]]
+#     n_to_rem = len(dfrem)
+#     n_rem_aftsk = n_raw_count - n_to_rem
+#     return n_raw_count, n_rem_aftsk
+
+
+# def find_regression_intensity_occurrence(
+#         meta, i_code, reg_for_which, reg_start, reg_end):
+#     ints = np.arange(reg_start, reg_end + 1)
+#     cols = []
+#     for i in ints:
+#         if reg_for_which == 'ras':
+#             cols.append('rge' + str(i) + '_ras')
+#         elif reg_for_which == 'raw':
+#             cols.append('ge' + str(i) + 'raw')
+#     res = None
+#     if meta.at[i_code, 'rge4_ras'] > 0:
+#         ys = meta.loc[i_code, cols]
+#         ys = np.array(ys)
+#         ys = ys.astype(np.float64)
+#         lys = np.log10(ys)
+#         try:
+#             res = scipy.stats.linregress(ints, lys)
+#         except ValueError as ve:
+#             print(i_code, 'regression failed.', ve)
+#     return res
+
+
+# def find_days_cros_the_intercept(x, suvf, intercept):
+#     df = pd.DataFrame({'x': x, 'suvf': suvf})
+#     # print(df)
+#     dfupp = df[df['suvf'] > intercept]
+#     dflow = df[df['suvf'] <= intercept]
+#     d1 = dfupp['x'].max()
+#     d2 = dflow['x'].min()
+#     return d1, d2
+
+
 ################################################################################
 #   Find the stations recorded intensity 7 or intensity 6
 ################################################################################
@@ -696,9 +836,7 @@ def find_largest_files(dir_data):
 
 
 ###############################################################################
-#
 # Foreshock-aftershock-swarm correction
-#
 ###############################################################################
 
 

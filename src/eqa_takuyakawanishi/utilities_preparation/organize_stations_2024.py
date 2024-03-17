@@ -301,8 +301,7 @@ def add_latitude_longitude(df, df_code_p):
 def main():
     dir_data = "eqanalysis/data_2024/stationwise_2021/"
     end_year = dir_data[-5:-1]
-    datetime_end_record = str(eval(end_year) + 1) + \
-        "-01-01 00:00:00"
+    datetime_end_record = str(eval(end_year)) + "-12-31 23:59:59"
     print(datetime_end_record)
     #
     fn_code_p = "eqanalysis/data_2024/code_p_20231205_df.csv"

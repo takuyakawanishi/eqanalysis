@@ -1,10 +1,10 @@
 /* html{font-size:16px; line-height:1.5} */
-html{font-size:12px}
+html{font-size:16px}
 @media (min-width: 576px) {
-  html{font-size:14px;}
+  html{font-size:16px;}
 }
 @media (min-width: 768px) {
-  html{font-size:15px;}
+  html{font-size:16px;}
 }
 @media (min-width: 992px) {
   html{font-size: 16px;}
@@ -12,7 +12,7 @@ html{font-size:12px}
 
 body{
 background-color: '#fffeee';
-line-height: 1.6;
+line-height: 1.75;
 font-family: Helvetica, 'Segoe UI', Tahoma, Geneva, Verdana,
 sans-serif;
 }

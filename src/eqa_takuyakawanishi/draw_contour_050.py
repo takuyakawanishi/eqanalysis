@@ -221,20 +221,13 @@ def main():
     ############################################################################
     #
     dir_data = 'eqanalysis/data_2024/stationwise_2021/'
-    end_year = dir_data[-5:-1]
     file2read_code_p = "eqanalysis/data_2024/code_p_20231205_df.csv"
-    df_org = pd.read_csv(file2read_code_p)
+    df_code = pd.read_csv(file2read_code_p)
     file2read_meta = \
         'eqanalysis/data_2024/intermediates/organized_code_2024_04.csv'
     conf = Settings()
-    # Dates and duration
-    # conf.date_beginning = '1996-04-01'
     conf.date_beginning = '1919-01-01 00:00:00'
-    # conf.date_beginning = '1996-04-01 00:00:00'
-    # conf.date_end = str(eval(end_year)) + "-12-31 23:59:59"
-    # conf.date_end = datetime.datetime.strftime(datetime.datetime.now(), "%Y-%m-%d %H:%M:%S")
     conf.date_end = "2011-03-10 23:59:59"
-    # conf.date_end = "2023-12-31 23:59:59"
     print("Date beginning: ", conf.date_beginning)
     print("Date end:       ", conf.date_end)
     conf.works_at_date_end = False
@@ -244,14 +237,14 @@ def main():
     #
     # Screening
     #
-    conf.n_int3_min = 0
-    conf.n_int4_min = 1
-    conf.n_int5_min = 0
+    # conf.n_int3_min = 0
+    # conf.n_int4_min = 1
+    # conf.n_int5_min = 0
 
-    conf.duration_min = 5
+    # conf.duration_min = 5
     conf.draw = 'contour'
     # contour_to_draw = ('est7', 'est6', 'st6p5') 
-    conf.contour_to_draw = 'est6p5'
+    conf.contour_to_draw = 'ero6p'
     conf.minus = False
     conf.contour_plot_int_7 = True
     conf.int7_station_size = 50
@@ -262,8 +255,8 @@ def main():
     conf.contour_colorbartitle = create_colorbar_title(conf.contour_to_draw)
     conf.contour_alpha = 1
     conf.contour_plot_stations = False
-    # conf.contour_lmax = - 2
-    conf.contour_lmin = - 5
+    conf.contour_lmax = -1
+    # conf.contour_lmin = - 4
     conf.contour_lstep = .5
     conf.contour_station_size = 1.
     conf.contour_station_alpha = .3
@@ -271,92 +264,49 @@ def main():
                           7413931, 3900131, 3900620]
     conf.int7_dates = [
         "1995 Jan 17", "2018 Sep 6", "2011 Mar 11", "2004 Oct 23",
-        "2016 Apr 16", "2014 Apr 14", "2024 Jan 1", "2024 Jan 1"
+        "2016 Apr 16", "2016 Apr 14", "2024 Jan 1", "2024 Jan 1"
     ]
-    if conf.contour_to_draw == 'freq2':
-        conf.contour_lmin = - 0.5
-    elif conf.contour_to_draw == 'freq3':
-        conf.contour_lmin = - 1
-    elif conf.contour_to_draw == 'est6':
-        conf.contour_lmin = - 4
-    elif conf.contour_to_draw == 'slope':
-        conf.contour_log_scale = False
-        conf.contour_lstep = 0.1
-        conf.contour_lmin = - 1
+    # if conf.contour_to_draw == 'freq2':
+    #     conf.contour_lmin = - 0.5
+    # elif conf.contour_to_draw == 'freq3':
+    #     conf.contour_lmin = - 1
+    # elif conf.contour_to_draw == 'est6':
+    #     conf.contour_lmin = - 4
+    # elif conf.contour_to_draw == 'slope':
+    #     conf.contour_log_scale = False
+    #     conf.contour_lstep = 0.1
+    #     conf.contour_lmin = - 1
     
-    #
-    ############################################################################
-    # Processing
-    ############################################################################
-    # beginning = conf.date_beginning[:10]
-    # end = conf.date_end[:10]
-    # print(beginning, end)
-    # rest_int = np.array([conf.n_int3_min, conf.n_int4_min, conf.n_int5_min])
-    # at_least_int_i = 0
-    # for i in range(len(rest_int)):
-    #     if rest_int[i] > 0:
-    #         at_least_int_i = i + 3
-    # print(at_least_int_i)
-    # output_filename = "eqanalysis/results/figures/" + \
-    #     "contour_" + conf.contour_to_draw + "_" + str(beginning) + "_" + \
-    #     str(end) + "_at_least_int_" + str(at_least_int_i) + \
-    #     "_min_duration_" + str(conf.duration_min)
-    # print(output_filename)
-    # code_p = pd.read_csv(file2read_code_p)
-    # meta = pd.read_csv(file2read_meta)
-    # meta = eqa.calc_latlon(meta)  # Add "latitude" and "longitude" to meta
-    # set_dict = {"set_from": conf.date_beginning, "set_to": conf.date_end}
-    # df_est = pd.DataFrame()
-    # for idx in meta.index:
-    #     station = meta.at[idx, "code_prime"]
-    #     print("Now processing station {:.0f}".format(station))
-    #     frequency, regression, summary = \
-    #         eqa.find_intensity_frequency_regression_summarize_ts(
-    #             meta, station, set_dict, dir_data=dir_data
-    #         )
-    #     #
-    #     # Consider latitude and longitude set in find_intensity_...summarize_ts
-    #     #
-    #     summary["latitude"] = meta.at[idx, "latitude"]
-    #     summary["longitude"] = meta.at[idx, "longitude"]
-    #     df_est = pd.concat([df_est, summary], axis=1)
-    # df_est = df_est.transpose()
-    # # if conf.works_at_date_end:
-    # #     df_est = df_est[df_est["to"] == conf.date_end]
-    # # df_est = df_est[df_est["int2"] >= conf.n_int2_min]
-    # df_est = df_est[df_est["int3"] >= conf.n_int3_min]
-    # df_est = df_est[df_est["int4"] >= conf.n_int4_min]
-    # df_est = df_est[df_est["int5"] >= conf.n_int5_min]
-    # df_est = df_est[df_est["duration"] >= conf.duration_min * 365.2425]
-    # n_relevant_stations = len(df_est)
+    file2read_meta = \
+        'eqanalysis/data_2024/intermediates/organized_code_2024_04.csv'
+    df_org = pd.read_csv(file2read_meta)
+    df_org = eqa.calc_latlon(df_org)
+    df_est = pd.read_csv("peps/results/japan_cor_ge2.csv")
+    # df_est = pd.read_csv(
+    #     "peps/results/japan_cor_ge2_form_1996-04-01_to_2011-03-10.csv")
+    df_est = df_est[df_est["ero6p"] > 0]
+    df_est = df_est[df_est["duration"] > 5 * 365.2425]
+    df_est = df_est[df_est["pvalue"] > 0]
+    df_est["est6p5"] = df_est["ero6p"]
 
-    df_est = pd.read_csv("peps/results/df_est6p5_corrected_02.csv")
+    idxs = df_est.index
+    for i_idx, idx in enumerate(idxs):
+        station_prime = df_est.at[idx, "station_prime"]
+        df_sel = df_org[df_org["code_prime"] == station_prime]
+        df_sel = df_sel.reset_index(drop=True)
+
+        df_est.at[idx, "latitude"] = df_sel.at[0, "latitude"]
+        df_est.at[idx, "longitude"] = df_sel.at[0, "longitude"]
+
     print(df_est.head(5))
-    df_est = df_est[df_est["n_corrected"] > 2]
-    df_est = df_est[df_est["est6p5_cor"] > 0]
-    # df_est = df_est[df_est["rvalue_cor"] < -.98]
-    df_est["est6p5"] = df_est["est6p5_cor"]
     n_relevant_stations = len(df_est)
     print("Number of relevant stations = {}".format(n_relevant_stations))
-    # sys.exit()
     lal, lau, lol, lou = eqa.calc_range_latlon(
         df_est, conf.map_include_all_japan_lands)
     
-    if conf.works_at_date_end:
-        wade = 1
-    else:
-        wade = 0
-    # filename = "est_" + str(wade) + str(conf.n_int2_min) + \
-    #            str(conf.n_int3_min) + str(conf.n_int4_min) + \
-    #            str(conf.n_int5_min) + "_" + str(conf.duration_min) + "_" +\
-    #            str(conf.date_beginning) + "_" + str(conf.date_end) + ".csv"
-    # filename = "eqanalysis/intermediates/" + filename
-
-    # df_est.to_csv(filename, index=None)
     print("df_est")
     print(df_est.head(3))
     print("conf.contour_to_draw = ", conf.contour_to_draw)
-
     if conf.draw == 'contour':
         fig, ax = draw_contour(
             df_est, conf.contour_to_draw, minus=conf.minus,
@@ -395,7 +345,7 @@ def main():
     lonlat7s = []
     for i_int7, int7 in enumerate(int7s):
         # print(int7)
-        lonlat7 = eqa.find_lonlat_for_station(int7, df_org)
+        lonlat7 = eqa.find_lonlat_for_station(int7, df_code)
         lonlat7s.append(lonlat7)
         movedown = 0
         if i_int7 == 5:
@@ -409,20 +359,21 @@ def main():
             conf.int7_dates[i_int7], xy=lonlat7, 
             xytext=(lonlat7[0] - 1.6, lonlat7[1] + 2.5 - movedown),
             xycoords=transform,
-            arrowprops=dict(arrowstyle="-", linewidth=.5, shrinkA=0, shrinkB=0), 
+            arrowprops=dict(arrowstyle="-", linewidth=1, shrinkA=0, shrinkB=0,
+                            color=(0.9, 1, 0.7)), 
             va="bottom", ha="right", zorder=5000)
         # print(lonlat7)
-        ax.scatter(
-            lonlat7[0], lonlat7[1], color=(0.6, 1, 0.4), 
-            transform=ccrs.PlateCarree(), edgecolors="k",
-            linewidths=0.5,
-            s=6, alpha=1, zorder=3000, marker="o"
-        )
-    output_filename = "eqanalysis/results/figures/test_contour_02"
-    fig.savefig(output_filename + ".svg")
-    fig.savefig(output_filename + ".png", dpi=300)
-    fig.savefig(output_filename + ".pdf")
-    print(output_filename)
+        # ax.scatter(
+        #     lonlat7[0], lonlat7[1], color=(0.6, 1, 0.4), 
+        #     transform=ccrs.PlateCarree(), edgecolors="k",
+        #     linewidths=0.5,
+        #     s=6, alpha=1, zorder=3000, marker="o"
+        # )
+    # output_filename = "eqanalysis/results/figures/test_contour_02"
+    # fig.savefig(output_filename + ".svg")
+    # fig.savefig(output_filename + ".png", dpi=300)
+    # fig.savefig(output_filename + ".pdf")
+    # print(output_filename)
     plt.show()
 
 

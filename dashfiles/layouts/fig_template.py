@@ -68,6 +68,9 @@ class DashSettings(FigSettings):
             'background-color': self.screen_background_color,
             'min-width': '100vw',
             'min-height': '100vh',
+            'padding': 0,
+            'margin-left': 0,
+            'margin-right': 0,
             # 'margin-left': '-12px',
             # 'margin-right': '-12px'
         }
@@ -88,7 +91,7 @@ class DashSettings(FigSettings):
         ], fluid=True, style={
             'min-width': '100vw', 'height': '48px',
             'background-color': '#192f60',
-            'margin-left': '-12px', 'margin-right': '-12px'}
+            'margin-left': '0', 'margin-right': '0'}
         )
 
         self.date_from = html.Div([
