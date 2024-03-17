@@ -53,20 +53,20 @@ class TestEqaForOrganized(unittest.TestCase):
         expected = [15, 7, 5, 4, 4, 3, 1]
         np.testing.assert_array_equal(res, expected)
 
-    def test_find_regression_int_freq(self):
-        freq = pd.Series()
-        freq["int1"] = 1.24390244
-        freq["int2"] = 0.36585366
-        freq["int3"] = 0.17073171
-        freq["int4"] = 0.04878049
-        freq.astype(float)
-        res, est7, est6, est6p5 = eqa.find_regression_int_freq(freq)
-        # print(res)
-        res_array = np.array([
-            res.slope, res.intercept, res.rvalue, est7, est6])
-        expected_res_array = np.array([
-            -0.455061, 0.532317, -0.995877, 0.002223, 0.006338])
-        np.testing.assert_almost_equal(res_array, expected_res_array, decimal=4)
+    # def test_find_regression_int_freq(self):
+    #     freq = pd.Series()
+    #     freq["int1"] = 1.24390244
+    #     freq["int2"] = 0.36585366
+    #     freq["int3"] = 0.17073171
+    #     freq["int4"] = 0.04878049
+    #     freq.astype(float)
+    #     res, est7, est6, est6p5 = eqa.find_regression_int_freq(freq)
+    #     # print(res)
+    #     res_array = np.array([
+    #         res.slope, res.intercept, res.rvalue, est7, est6])
+    #     expected_res_array = np.array([
+    #         -0.455061, 0.532317, -0.995877, 0.002223, 0.006338])
+    #     np.testing.assert_almost_equal(res_array, expected_res_array, decimal=4)
 
 ################################################################################
 # TS version        
@@ -564,30 +564,31 @@ class TestForeshockAftershockSwarmCorrection(unittest.TestCase):
         # print(exp_df_corrected)
         pd.testing.assert_frame_equal(res, exp_df_corrected, rtol=1e-3)         
 
-    def test_add_corrected_results_to_summary(self):
-        factor_data = [
-            [1, .55, np.log10(.55), -.05, -.99, 75, .55 * 75],
-            [2, .71, np.log10(.71), -.02, -.999, 26, .71 * 26],
-            [3, .8, np.log10(.8), -.005, -.9995, 5, .8 * 5],
-            [4, 1, np.nan, np.nan, np.nan, 2, 2],
-            [5, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan],
-            [6, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan],
-            [7, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan]
-        ]
-        df_corrected = pd.DataFrame(
-            factor_data,
-            columns=['intensity', 'factor', 'intercept', 'slope',
-                     'rvalue', 'ro', 'corrected'])
-        slope_cor = -0.46073535
-        intercept_cor = 2.09802480
-        rvalue_cor = -0.989077102797
-        summary = pd.Series()
-        res = eqa.add_corrected_results_to_summary(summary, df_corrected)
-        # print(res)
-        self.assertAlmostEqual(res["slope_cor"], slope_cor, places=4)
-        self.assertAlmostEqual(res['intercept_cor'], intercept_cor,
-                               places=4)
-        self.assertAlmostEqual(res['rvalue_cor'], rvalue_cor, places=4)
+    # def test_add_corrected_results_to_summary(self):
+    #     factor_data = [
+    #         [1, .55, np.log10(.55), -.05, -.99, 75, .55 * 75],
+    #         [2, .71, np.log10(.71), -.02, -.999, 26, .71 * 26],
+    #         [3, .8, np.log10(.8), -.005, -.9995, 5, .8 * 5],
+    #         [4, 1, np.nan, np.nan, np.nan, 2, 2],
+    #         [5, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan],
+    #         [6, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan],
+    #         [7, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan]
+    #     ]
+    #     df_corrected = pd.DataFrame(
+    #         factor_data,
+    #         columns=['intensity', 'factor', 'intercept', 'slope',
+    #                  'rvalue', 'ro', 'corrected'])
+    #     slope_cor = -0.46073535
+    #     intercept_cor = 2.09802480
+    #     rvalue_cor = -0.989077102797
+    #     summary = pd.Series()
+    #     res = eqa.add_corrected_results_to_summary(summary, df_corrected)
+    #     # print(res)
+    #     sel
+    #     f.assertAlmostEqual(res["slope_cor"], slope_cor, places=4)
+    #     self.assertAlmostEqual(res['intercept_cor'], intercept_cor,
+    #                            places=4)
+    #     self.assertAlmostEqual(res['rvalue_cor'], rvalue_cor, places=4)
 
 
 class TestWithRealData(unittest.TestCase):
@@ -601,8 +602,8 @@ class TestWithRealData(unittest.TestCase):
                     "set_to": "2021-12-31 23:59:59"}
         dfs_intervals = eqa.create_interval_datasets_ts(
             df_org, 3500000, set_dict, dir_data)
-        ro, regression, summary = \
-            eqa.find_intensity_ro_regression_summarize_ts(
+        ro, summary = \
+            eqa.find_intensity_ro_summarize_ts(
                 df_org, 3500000, set_dict, dir_data=dir_data)
         ro = np.array(ro.astype(np.float64))
         df_factor = eqa.find_correction_factor(dfs_intervals)

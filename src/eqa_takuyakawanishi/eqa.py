@@ -107,30 +107,6 @@ def count_intensity_in_dataframe(df):
     return cum_counts
 
 
-def find_regression_int_freq(ro):
-    freq_values = ro.values
-    n = len(freq_values)
-    ints = np.arange(n) + 1
-    lfreq = np.log10(freq_values.astype(np.float64))
-    res = None
-    est7 = None
-    est6 = None
-    est6p5 = None
-    #
-    # Feb. 18, 2024, we changed the regression from intensity 1.
-    #
-    try:
-        # res = scipy.stats.linregress(ints[1:], lfreq[1:])
-        res = scipy.stats.linregress(ints, lfreq)
-    except Exception as ex:
-        print(ex)
-    else:
-        est7 = 10 ** (res.intercept + res.slope * 7)
-        est6 = 10 ** (res.intercept + res.slope * 6)
-        est6p5 = 10 ** (res.intercept + res.slope * 6.5)
-    return res, est7, est6, est6p5
-
-
 def find_available_periods_ts(meta, station):
     meta_1 = meta[meta["code_prime"] == station]
     meta_1 = meta_1.reset_index(drop=True)
@@ -231,7 +207,6 @@ def take_data_subset_by_period_ts(station, datetime_b, datetime_e, dir_data):
 # def create_intensity_frequency_table_of_period_ts(actual, dir_data='./'):
 #     return create_intensity_ro_table_of_period_ts(actual, dir_data=dir_data)
 
-
 def create_intensity_ro_table_of_period_ts(actual, dir_data='./'):
     #print(actual)
     columns = ["int1", "int2", "int3", "int4", "int5", "int6", "int7"]
@@ -253,24 +228,25 @@ def create_intensity_ro_table_of_period_ts(actual, dir_data='./'):
     df_c = pd.DataFrame(cum_counts_s, columns=columns)
     actual_res = pd.concat([actual, df_c], axis=1)
     actual_res_sum = actual_res.sum()
-    # actual_res_sum["station"] = actual_res.at[0, "station"]
     actual_res_sum["froms"] = list(actual["from"])
     actual_res_sum["tos"] = list(actual["to"])
     duration = actual_res_sum["duration"]
-    # print(type(actual_res_sum))
     actual_res_sum = actual_res_sum.drop(labels=['from', 'to'])
     ro = actual_res_sum[columns]
     ro = ro[ro > 0] / duration * 365.2425
     return ro, actual_res_sum
-
 
 # def find_intensity_frequency_regression_summarize_ts(
 #         meta, station, set_dict, dir_data='./'):
 #     return find_intensity_ro_regression_summarize_ts(\
 #         meta, station, set_dict, dir_data='./')
 
-
 def find_intensity_ro_regression_summarize_ts(
+        meta, station, set_dict, dir_data='./'):
+    return find_intensity_ro_summarize_ts(
+        meta, station, set_dict, dir_data='./')
+
+def find_intensity_ro_summarize_ts(
         meta, station, set_dict, dir_data='./'):
     meta_1 = meta[meta["code_prime"] == station]
     meta_1 = meta_1.reset_index(drop=True)
@@ -284,21 +260,7 @@ def find_intensity_ro_regression_summarize_ts(
     ro, summary = \
         create_intensity_ro_table_of_period_ts(actual, dir_data)
     summary = pd.concat([summary_pre, summary])
-    summary["slope"] = np.nan
-    summary["intercept"] = np.nan
-    summary["rvalue"] = np.nan
-    summary["pvalue"] = np.nan
-    summary["est6p5"] = np.nan
-    regression = None
-    #
-    if len(ro) > 2:
-        regression, est7, est6, est6p5 = find_regression_int_freq(ro)
-        summary["slope"] = np.round(regression.slope, 3)
-        summary["intercept"] = np.round(regression.intercept, 3)
-        summary["rvalue"] = np.round(regression.rvalue, 3)
-        summary["pvalue"] = np.round(regression.pvalue, 3)
-        summary["est6p5"] = round_to_k(est6p5, 3)
-    return ro, regression, summary
+    return ro, summary
 
 
 def find_first_and_last_record_of_station(station, dir_data):
@@ -461,8 +423,6 @@ def find_intensities(meta, station, intensities, dir_data="./"):
 
 
 def combine_if_no_gaps(gaps, diss):
-    # print("len diss = {}".format(len(diss)))
-    # print("len diss[0] = {}".format(len(diss[0])))
     if diss is None:
         print("diss is None. This should not happen.")
         sys.exit()
@@ -471,7 +431,6 @@ def combine_if_no_gaps(gaps, diss):
     if type(gaps) is str:
         gaps = eval(gaps)
     for i_int in range(7):
-        # print("i_int = {}".format(i_int))
         if diss[0][i_int].empty:
             continue
             print("empty dataframe at 0, i_int", i_int)
@@ -588,8 +547,6 @@ def create_subdfs_by_intensities_essentials(df_st, beginning, end_t):
     d3 = df[df['intensity'].isin(l3)]
     d2 = df[df['intensity'].isin(l2)]
     d1 = df[df['intensity'].isin(l1)]
-    # print("d7 in create_subdfs_", d7)
-    # print(type(d7))
     return d7, d6, d5, d4, d3, d2, d1
 
 
@@ -703,9 +660,7 @@ def find_largest_files(dir_data):
 
 
 def fit_to_first_linear_part(ints_ot, suvf_ot):
-    # print(ints_ot, suvf_ot)
     n_ot = len(ints_ot)
-    # print(n_ot)
     if n_ot < 6:
         return reg_min, factor
     sums = np.zeros(len(ints_ot) - 6)
@@ -717,7 +672,6 @@ def fit_to_first_linear_part(ints_ot, suvf_ot):
         count += 1
         x_seps.append(ints_ot[n_sep])
         reg_0 = scipy.stats.linregress(ints_ot[:n_sep], np.log10(suvf_ot[:n_sep]))
-        # print(reg_0.intercept)
         reg_1 = scipy.stats.linregress(ints_ot[n_sep:], np.log10(suvf_ot[n_sep:]))
         sum_0 = ((np.log10(suvf_ot[:n_sep]) - \
                     (reg_0.intercept + reg_0.slope * ints_ot[:n_sep])) ** 2).sum()
@@ -807,39 +761,37 @@ def calc_corrected_ro(df_factor, ro):
 
 
 def add_corrected_results_to_summary(summary, df_corrected):
-    # summary["corrected"] = df_corrected["corrected"]
     for intensity in [1, 2, 3, 4, 5, 6, 7]:
         idx = "int" + str(intensity) + "_roc"
         summary[idx] = df_corrected.at[intensity-1, "corrected"]
-    df_sel = df_corrected[df_corrected["corrected"] > 0]
-    corrected = df_sel["corrected"].values
-    # intensity = df_sel["intensity"].values
-    n = len(corrected)
-    summary["slope_cor"] = np.nan
-    summary["intercept_cor"] = np.nan
-    summary["rvalue_cor"] = np.nan
-    summary["pvalue_cor"] = np.nan
-    summary["est7_cor"] = np.nan
-    summary["est6p5_cor"] = np.nan
-    summary["est6_cor"] = np.nan
-    iror = IROR(corrected)
-    res = iror.find_iror(1)
-    if res is not None:
-        summary["slope_cor"] = res.slope
-        summary["intercept_cor"] = res.intercept
-        summary["rvalue_cor"] = res.rvalue
-        summary["pvalue_cor"] = res.pvalue
-        summary["est7_cor"] = 10 ** (res.intercept + res.slope * 7)
-        summary["est6p5_cor"] = 10 ** (res.intercept + res.slope * 6.5)
-        summary["est6_cor"] = 10 ** (res.intercept + res.slope * 6)
+    # df_sel = df_corrected[df_corrected["corrected"] > 0]
+    # corrected = df_sel["corrected"].values
+    # n = len(corrected)
+    # summary["slope_cor"] = np.nan
+    # summary["intercept_cor"] = np.nan
+    # summary["rvalue_cor"] = np.nan
+    # summary["pvalue_cor"] = np.nan
+    # summary["est7_cor"] = np.nan
+    # summary["est6p5_cor"] = np.nan
+    # summary["est6_cor"] = np.nan
+    # iror = IROR(corrected)
+    # res = iror.find_iror(1)
+    # if res is not None:
+    #     summary["slope_cor"] = res.slope
+    #     summary["intercept_cor"] = res.intercept
+    #     summary["rvalue_cor"] = res.rvalue
+    #     summary["pvalue_cor"] = res.pvalue
+    #     summary["est7_cor"] = 10 ** (res.intercept + res.slope * 7)
+    #     summary["est6p5_cor"] = 10 ** (res.intercept + res.slope * 6.5)
+    #     summary["est6_cor"] = 10 ** (res.intercept + res.slope * 6)
     return summary
 
 
 def do_aftershock_correction(df_org, station_prime, set_dict, dir_data):
     dfs_intervals = create_interval_datasets_ts(
         df_org, station_prime, set_dict, dir_data)
-    ro, regression, summary = \
-        find_intensity_ro_regression_summarize_ts(
+    ro, summary = \
+        find_intensity_ro_summarize_ts(
             df_org, station_prime, set_dict, dir_data=dir_data)
     ro = np.array(ro.astype(np.float64))
     df_factor = find_correction_factor(dfs_intervals)  #thres_int=[5, 10, 20, 40]
