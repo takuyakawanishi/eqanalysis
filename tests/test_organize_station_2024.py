@@ -167,7 +167,7 @@ class TestOrganizeStations2024(unittest.TestCase):
         expected_dtbs = eval(cp_1.at[0, "datetime_b_s"])
         expected_dtes = [
             '2011-05-12 13:00:00', '2016-02-19 12:00:00', 
-            '2022-01-01 00:00:00']
+            '2021-12-31 23:59:59']
         self.assertListEqual(res[0], expected_dtbs)
         self.assertListEqual(res[1], expected_dtes)
 

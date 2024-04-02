@@ -37,7 +37,6 @@ cudr_base_yellowgreen_ap3 = (216/255, 242/255, 85/255, .3)
 curd_base_brightblue_ap3 = (191/255, 228/255, 255/255, .3)
 
 
-
 ################################################################################
 #  Utility
 ################################################################################
@@ -87,7 +86,6 @@ def set_datetime(idx):
           ["to", 2021, 12, 31, 23, 59, 59]]
     columns=['attrib', 'yr', 'mo', 'day', 'hr', 'min', 'sec']
     df = pd.DataFrame(data_init, columns=columns)
-    # print(df)
     output = html.Div([
         html.H6(['Setting Period']),
         html.Div([
@@ -96,6 +94,9 @@ def set_datetime(idx):
                 id="set-datetime_" + str(idx),
                 columns=[{'name': i, 'id': i} for i in df.columns],
                 data=df.to_dict("records"),
+                persistence=True,
+                persistence_type='memory',
+                persisted_props = ['columns.name', 'data'],
                 style_cell={
                     'width': '12%'.format(len(df.columns)),
                 },
@@ -156,6 +157,9 @@ def set_range_fit_intervals(idx, low, upp, factor_user):
                             format=Format(precision=0, scheme=Scheme.fixed))
                     ],
                     data=df.to_dict("records"),
+                    persistence=True,
+                    persistence_type='memory',
+                    persisted_props = ['columns.name', 'data'],
                     style_cell_conditional=[
                         {'if': {'column_id': 'Your fitting'},'width': '35%'},
                     ]
@@ -530,6 +534,13 @@ app.layout = dbc.Container([
                 dcc.Store(id='iror-data'),
                 dcc.Store(id='iror-summary-data'),
                 dcc.Store(id='fasc-factors-user-data'),
+                dcc.Store(id='factor-range_1'),
+                dcc.Store(id='factor-range_2'),
+                dcc.Store(id='factor-range_3'),
+                dcc.Store(id='factor-range_4'),
+                dcc.Store(id='factor-range_5'),
+                dcc.Store(id='factor-range_6'),
+                dcc.Store(id='factor-range_7'),
                 dcc.Store(id='factor-user_1'),
                 dcc.Store(id='factor-user_2'),
                 dcc.Store(id='factor-user_3'),
@@ -537,8 +548,7 @@ app.layout = dbc.Container([
                 dcc.Store(id='factor-user_5'),
                 dcc.Store(id='factor-user_6'),
                 dcc.Store(id='factor-user_7'),
-                #'factor-user-temp_1'
-                dcc.Store(id='factor-user-temp_1'),
+                dcc.Store(id='factor-user-temp_1', storage_type='memory'),
                 dcc.Store(id='factor-user-temp_2'),
                 dcc.Store(id='factor-user-temp_3'),
                 dcc.Store(id='factor-user-temp_4'),
@@ -590,6 +600,7 @@ app.layout = dbc.Container([
                     html.Div([
                     html.Div(id='intervals_1-figure', style={'display': 'inline-block', 'width': '316px'}),
                     ], style={'display': 'inline-block', 'width': '316px'}),
+                    html.Div(id='factor-user-display-temp_1'),
                     html.Div(id='intervals_2-figure', style={'display': 'inline-block', 'width': '316px'}),
                     html.Div(id='intervals_3-figure', style={'display': 'inline-block', 'width': '316px'}),
                     html.Div(id='intervals_4-figure', style={'display': 'inline-block', 'width': '316px'}),
@@ -683,12 +694,10 @@ def set_analysis_period(_, data, columns):
         int(data[1]['yr']), int(data[1]['mo']), int(data[1]['day']),
         int(data[1]['hr']), int(data[1]['min']), int(data[1]['sec'])
     )
-    # print(dt_from, dt_to)
     set_to = {
         "set_from": datetime.datetime.strftime(dt_from, "%Y-%m-%d %H:%M:%S"),
         "set_to": datetime.datetime.strftime(dt_to, "%Y-%m-%d %H:%M:%S")
     }
-    # print(set_to)
     return set_to
 
 # @app.callback(
@@ -718,28 +727,24 @@ def set_analysis_period(_, data, columns):
 )
 def refresh_fasc_factors_table(
     iror_dict, fu_1, fu_2, fu_3, fu_4, fu_5, fu_6, fu_7):
-    # print(type(factors_user_dict))
-    # print(type(fu_1))
-    # print(fu_1)
     iror = pd.DataFrame.from_dict(iror_dict)
     df_factors = iror[['intensity', 'factor']]
-    df_factors['factor_user'] = np.nan
+    df_factors.loc[:, 'factor_user'] = np.nan
     if fu_1 is not None:
-        df_factors.at[0, 'factor_user'] = fu_1
+        df_factors.at[0, 'factor_user'] = fu_1['factor_user_temp']
     if fu_2 is not None:
-        df_factors.at[1, 'factor_user'] = fu_2
+        df_factors.at[1, 'factor_user'] = fu_2['factor_user_temp']
     if fu_3 is not None:
-        df_factors.at[2, 'factor_user'] = fu_3
+        df_factors.at[2, 'factor_user'] = fu_3['factor_user_temp']
     if fu_4 is not None:
-        df_factors.at[3, 'factor_user'] = fu_4
+        df_factors.at[3, 'factor_user'] = fu_4['factor_user_temp']
     if fu_5 is not None:
-        df_factors.at[4, 'factor_user'] = fu_5
+        df_factors.at[4, 'factor_user'] = fu_5['factor_user_temp']
     if fu_6 is not None:
-        df_factors.at[5, 'factor_user'] = fu_6
+        df_factors.at[5, 'factor_user'] = fu_6['factor_user_temp']
     if fu_7 is not None:
-        df_factors.at[6, 'factor_user'] = fu_7
+        df_factors.at[6, 'factor_user'] = fu_7['factor_user_temp']
 
-    print(df_factors)
     output = html.Div([
         html.H6(['FAS Correction Factors']),
         dash_table.DataTable(
@@ -753,6 +758,9 @@ def refresh_fasc_factors_table(
                 dict(id='factor_user', name='factor_user', type='numeric',
                      format=Format(precision=3)),                
             ],
+            # persistence=True,
+            # persistence_type='memory',
+            # persisted_props = ['columns.name', 'data'],
             style_cell_conditional=[
                 {'if': {'column_id': 'intensity'}, 'width': '30%'},
                 {'if': {'column_id': 'factor'},'width': '35%'},
@@ -761,7 +769,6 @@ def refresh_fasc_factors_table(
         ),    
     ])
     return output
-
 
 
 @app.callback(
@@ -792,17 +799,9 @@ def calculate_summary(station_prime, set_dict):
         else:
             dicts_intervals.append(None)
 
-    # print(df_corrected)
     summary = pd.DataFrame(summary_corrected).transpose()
     summary_dict = summary.to_dict('records')
-    # summary_columns = [
-    #     {'name': str(i), 'id': str(i)} for i in summary.columns]
-    # print("df_corrected in culculate_summary")
-    # print(df_corrected)
     corrected_dict = df_corrected.to_dict('records')
-    # corrected_columns = [
-    #     {'name': str(i), 'id': str(i)} for i in df_corrected.columns        
-    # ]
     return corrected_dict, summary_dict, dicts_intervals[0],\
         dicts_intervals[1], dicts_intervals[2], dicts_intervals[3],\
         dicts_intervals[4], dicts_intervals[5], dicts_intervals[6]
@@ -817,7 +816,6 @@ def calculate_summary(station_prime, set_dict):
 def select_fitting_intensity_lower_bound(_, draw_correct, value):
     dict = {"Draw": draw_correct, "lowestint": int(value)}
     return dict
-
 
 
 @app.callback(
@@ -843,7 +841,6 @@ def regression_lines(corrected_params, corrected_data):
             df.at[0, 'intercept'] = res.intercept
             df.at[0, 'rvalue'] = res.rvalue
             df.at[0, 'pvalue'] = res.pvalue
-    # print(df)
     return df.to_dict('records')
 
 
@@ -857,9 +854,6 @@ def draw_iror(corrected_data, reg_cor_params, reg_corrected):
     df = pd.DataFrame.from_dict(corrected_data)
     df_reg_corrected = pd.DataFrame.from_dict(reg_corrected)
     regression = reg_cor_params["Draw"]
-    # print("df_corrected in draw_iror")
-    # print(df)
-    # print(df_reg_corrected)
     fig = go.Figure()
     fig.add_trace(go.Scatter(
         x=df['intensity'], y=df['ro'], mode="markers",
@@ -973,6 +967,60 @@ def draw_iror(corrected_data, reg_cor_params, reg_corrected):
 #     # print(output)
 #     return output, reg_dict, factor
 
+
+################################################################################
+# For initial fitting range
+################################################################################
+
+# @app.callback(
+#     Output('factor-range_1', 'data'),
+#     Input('iror-data', 'data')
+# )
+# def find_initial_fitting_range(iror_dict):
+#     df_corrected = pd.DataFrame.from_dict(iror_dict)
+#     print('df_corrected at find_initial_fitting_range')
+#     print(df_corrected)
+#     print(data_1)
+#     print(df_range_1)
+#     data_1 = [["Range (days)", 4,
+#                int(df_corrected.at[0, 'interval_1st_fit_upp'])]]
+#     df_range_1 = pd.DataFrame(data_1, columns=["Your fitting" 'low', 'upp'])
+#     df_dict_1 = df_range_1.to_dict('records')
+
+#     data_2 = [["Range (days)", 8,
+#                int(df_corrected.at[0, 'interval_2st_fit_upp'])]]
+#     df_range_2 = pd.DataFrame(data_2, columns=["Your fitting" 'low', 'upp'])
+#     df_dict_2 = df_range_2.to_dict('records')
+
+#     data_3 = [["Range (days)", 16, 
+#                int(df_corrected.at[0, 'interval_3st_fit_upp'])]]
+#     df_range_3 = pd.DataFrame(data_3, columns=["Your fitting" 'low', 'upp'])
+#     df_dict_3 = df_range_3.to_dict('records')
+
+#     data_4 = [["Range (days)", 32, 
+#                int(df_corrected.at[0, 'interval_4st_fit_upp'])]]
+#     df_range_4 = pd.DataFrame(data_4, columns=["Your fitting" 'low', 'upp'])
+#     df_dict_4 = df_range_4.to_dict('records')
+
+#     data_5 = [["Range (days)", 64, 
+#                int(df_corrected.at[0, 'interval_5st_fit_upp'])]]
+#     df_range_5 = pd.DataFrame(data_5, columns=["Your fitting" 'low', 'upp'])
+#     df_dict_5 = df_range_5.to_dict('records')
+
+#     data_6 = [["Range (days)", 128, 
+#                int(df_corrected.at[0, 'interval_6st_fit_upp'])]]
+#     df_range_6 = pd.DataFrame(data_6, columns=["Your fitting" 'low', 'upp'])
+#     df_dict_6 = df_range_6.to_dict('records')
+
+#     data_7 = [["Range (days)", 256, 
+#                int(df_corrected.at[0, 'interval_7st_fit_upp'])]]
+#     df_range_7 = pd.DataFrame(data_7, columns=["Your fitting" 'low', 'upp'])
+#     df_dict_7 = df_range_7.to_dict('records')
+
+#     return df_dict_1, df_dict_2, df_dict_3, df_dict_4, df_dict_5, df_dict_6, \
+#         df_dict_7
+
+
 def draw_interval_survival(df_intervals, df_corrected, i_int):
     fig = go.Figure()
     fig.add_trace(go.Scatter(
@@ -1047,6 +1095,8 @@ def draw_intervals(
     corrected_dict, intervals_1_dict, intervals_2_dict, intervals_3_dict,
     intervals_4_dict, intervals_5_dict, intervals_6_dict, intervals_7_dict,
     fut_1, fut_2, fut_3, fut_4, fut_5, fut_6, fut_7):
+
+    futs = [fut_1, fut_2, fut_3, fut_4, fut_5, fut_6, fut_7]
     df_corrected = pd.DataFrame.from_dict(corrected_dict)
     print(df_corrected)
     dfs_intervals = [
@@ -1061,10 +1111,15 @@ def draw_intervals(
     figs = [None, None, None, None, None, None, None]
     for i_int, df_intervals in enumerate(dfs_intervals):
         if len(df_intervals) != 0:
-            fu = eval("fut_" + str(i_int + 1))
-            if fu is not None:
+            fu_dict = futs[i_int]
+            if fu_dict is not None:
+                print('fu_dict in draw_intervals')
+                print(fu_dict)
+                fu = fu_dict['factor_user_temp']
                 fu = np.round(fu, 3)
                 print(fu)
+            else:
+                fu = np.nan
             fig = draw_interval_survival(df_intervals, df_corrected, i_int) 
             figs[i_int] = html.Div([
                 html.Div([
@@ -1107,17 +1162,52 @@ def fit_intervals_find_factor(df_intervals, range_dict):
 def find_factor_user_1(n_clicks_1, range_dict, intervals_dict):
     df_intervals = pd.DataFrame.from_dict(intervals_dict)
     factor_1 = fit_intervals_find_factor(df_intervals, range_dict)
-    return factor_1
+    fu_dict = {'factor_user_temp': factor_1}
+    print("fu_dict in find_factor_user_1")
+    print(fu_dict)
+    return fu_dict
 
 
 @app.callback(
     Output('factor-user_1', 'data'),
     Input('button-use-factor-user_1', 'n_clicks'),
-    State('factor-user-temp_1', 'data')
+    Input('factor-user-temp_1', 'data')
 )
-def put_factor_user_1_to_user_factors(_, fu):
-    # print("fu", fu)
-    return fu
+def put_factor_user_1_to_user_factors(_, fu_dict):
+    return fu_dict
+
+
+@app.callback(
+    Output('factor-user-display-temp_1', 'children'),
+    Input('interval-fit-range_1', 'data'),
+    Input('factor-user-temp_1', 'data')
+)
+def display_factor_user_1(range_dict, fu_1):
+    df_range = pd.DataFrame.from_dict(range_dict)
+    df_range.at[0, 'fu_1'] = fu_1['factor_user_temp']
+    columns = columns=[{"name": i, "id": i} for i in df_range.columns]
+    output = html.Div([
+        dash_table.DataTable(
+            # editable=True,
+            id="factor-user_display-temp-table_1",
+            columns=columns,
+            data=df_range.to_dict("records"),
+            persistence=True,
+            persistence_type='memory',
+            persisted_props = ['columns.name', 'data'],
+            # style_cell={
+            #     'width': '12%'.format(len(df.columns)),
+            # },
+            # style_cell_conditional=[
+            #     {'if': {'column_id': 'attrib'},'width': '15%'},
+            #     {'if': {'column_id': 'yr'},'width': '15%'},
+            # ],            
+        ),    
+    ]),
+    return output
+
+
+
 
 
 @app.callback(
@@ -1128,18 +1218,70 @@ def put_factor_user_1_to_user_factors(_, fu):
 )
 def find_factor_user_2(n_clicks_2, range_dict, intervals_dict):
     df_intervals_2 = pd.DataFrame.from_dict(intervals_dict)
-    print(df_intervals_2)
-    factor_2 = fit_intervals_find_factor(df_intervals_2, range_dict)
-    return factor_2
+    return fit_intervals_find_factor(df_intervals_2, range_dict)
 
 
 @app.callback(
-    Output('factor-user_2', 'data'),
-    Input('button-use-factor-user_2', 'n_clicks'),
-    State('factor-user-temp_2', 'data')
+    Output('factor-user-temp_3', 'data'),
+    Input('button-interval-fit-range_3', 'n_clicks'),
+    State('interval-fit-range_3', 'data'),
+    State('intervals_3-data', 'data')
 )
-def put_factor_user_2_to_user_factors(_, fu):
-    return fu
+def find_factor_user_3(n_clicks_3, range_dict, intervals_dict):
+    df_intervals_3 = pd.DataFrame.from_dict(intervals_dict)
+    return fit_intervals_find_factor(df_intervals_3, range_dict)
+
+
+@app.callback(
+    Output('factor-user-temp_4', 'data'),
+    Input('button-interval-fit-range_4', 'n_clicks'),
+    State('interval-fit-range_4', 'data'),
+    State('intervals_4-data', 'data')
+)
+def find_factor_user_4(n_clicks_4, range_dict, intervals_dict):
+    df_intervals_4 = pd.DataFrame.from_dict(intervals_dict)
+    return fit_intervals_find_factor(df_intervals_4, range_dict)
+
+
+@app.callback(
+    Output('factor-user-temp_5', 'data'),
+    Input('button-interval-fit-range_5', 'n_clicks'),
+    State('interval-fit-range_5', 'data'),
+    State('intervals_5-data', 'data')
+)
+def find_factor_user_5(n_clicks_5, range_dict, intervals_dict):
+    df_intervals_5 = pd.DataFrame.from_dict(intervals_dict)
+    return fit_intervals_find_factor(df_intervals_5, range_dict)
+
+
+@app.callback(
+    Output('factor-user-temp_6', 'data'),
+    Input('button-interval-fit-range_6', 'n_clicks'),
+    State('interval-fit-range_6', 'data'),
+    State('intervals_6-data', 'data')
+)
+def find_factor_user_6(n_clicks_6, range_dict, intervals_dict):
+    df_intervals_6 = pd.DataFrame.from_dict(intervals_dict)
+    return fit_intervals_find_factor(df_intervals_6, range_dict)
+
+
+@app.callback(
+    Output('factor-user-temp_7', 'data'),
+    Input('button-interval-fit-range_7', 'n_clicks'),
+    State('interval-fit-range_7', 'data'),
+    State('intervals_7-data', 'data')
+)
+def find_factor_user_7(n_clicks_7, range_dict, intervals_dict):
+    df_intervals_7 = pd.DataFrame.from_dict(intervals_dict)
+    return fit_intervals_find_factor(df_intervals_7, range_dict)
+
+# @app.callback(
+#     Output('factor-user_2', 'data'),
+#     Input('button-use-factor-user_2', 'n_clicks'),
+#     State('factor-user-temp_2', 'data')
+# )
+# def put_factor_user_2_to_user_factors(_, fu):
+#     return fu
 
 
 # # @app.callback(
