@@ -18,17 +18,8 @@ class Settings:
         dt_now = datetime.datetime.now()
         self.datetime_end = datetime.datetime.strftime(
             dt_now, "%Y-%m-%d %H:%M:%S")
-        # self.duration_min = 5
-        # self.remiflt = {
-        #     '1': 7, '2': 10, '3': 32, '4': 46, '5': 46, '6': 46, '7': 46
-        # }
         self.range_exp_fit_low = [20, 20, 50, 50, 50, 50, 50]
         self.range_exp_fit_upp = [100, 100, 1000, 1000, 1000, 1000, 1000]
-        # self.intensities = [1, 2, 3, 4, 5, 6, 7]
-        # self.n_int3_min = 1
-        # self.n_int4_min = 1
-        # self.n_int5_min = 0
-        # self.n_int6_min = 0
 
 
 class IROR():
@@ -190,6 +181,9 @@ def add_datetime_column_to_dataframe(df):
         sys.exit()
 
 
+#
+# No test is provided for the following.
+#
 def take_data_subset_by_period_ts(station, datetime_b, datetime_e, dir_data):
     try:
         df = pd.read_csv(dir_data + 'st_' + str(station) + '.txt')
@@ -204,6 +198,9 @@ def take_data_subset_by_period_ts(station, datetime_b, datetime_e, dir_data):
     return df
 
 
+#
+# No test is provided for the following.
+#
 # def create_intensity_frequency_table_of_period_ts(actual, dir_data='./'):
 #     return create_intensity_ro_table_of_period_ts(actual, dir_data=dir_data)
 
@@ -245,7 +242,9 @@ def find_intensity_ro_regression_summarize_ts(
         meta, station, set_dict, dir_data='./'):
     return find_intensity_ro_summarize_ts(
         meta, station, set_dict, dir_data='./')
-
+#
+# No test is provided for the following.
+#
 def find_intensity_ro_summarize_ts(
         meta, station, set_dict, dir_data='./'):
     meta_1 = meta[meta["code_prime"] == station]
@@ -262,7 +261,9 @@ def find_intensity_ro_summarize_ts(
     summary = pd.concat([summary_pre, summary])
     return ro, summary
 
-
+#
+# No test is provided for the following.
+#
 def find_first_and_last_record_of_station(station, dir_data):
     fn = dir_data + "st_" + str(station) + ".txt"
     df = pd.read_csv(fn)
@@ -344,7 +345,11 @@ def find_datetime_end(code, to, datetime_end, dir_data='./'):
         datetime_end = datetime_end_read
     return datetime_end
 
-
+#
+# No test is provided for the following.
+# Maybe we can remove this from eqa, it is used only
+# in the data preprocessing.
+#
 def find_operation_period_from_station_wise_data_ts(code, dir_data):
     fn = dir_data + 'st_' + str(code) + '.txt'
     df = pd.read_csv(fn)
@@ -372,7 +377,9 @@ def calc_datetime_b_datetime_e_duration(
 #   Find high intensity earthquakes
 ################################################################################
 
-
+#
+# No test is provided for the following.
+#
 def extract_quakes_by_intensities(
         meta, intensities, dir_data):
     codes = list(meta["code_prime"])
@@ -395,6 +402,9 @@ def extract_quakes_by_intensities(
                     dfs = pd.concat([dfs, df], axis=0)
     return dfs
 
+#
+# No test is provided for the following
+#
 
 def find_intensities(meta, station, intensities, dir_data="./"):
     available = find_available_periods_ts(meta, station)
@@ -473,12 +483,12 @@ def create_stationwise_dataframe(actual, dir_data):
         d7, d6, d5, d4, d3, d2, d1 = create_subdfs_by_intensities_essentials(
             dfsts[i_st], beginning, end)
         dis = [d1, d2, d3, d4, d5, d6, d7]
-        # print("type d7 in crate_stationwise_dataframe", type(d7))
         diss.append(dis)
-        # print(diss)
     return diss
 
-
+#
+# No test is provided for the following.
+#
 def create_interval_dataframe_ts(diss):
     dfis = []
     for i_int in range(7):
@@ -573,7 +583,9 @@ def find_lonlat_for_station(station, code_p):
     # print(dfsel)
     return [calc_longitude(dfsel.at[0, "lon"]), calc_latitude(dfsel.at[0, "lat"])]
 
-
+#
+# No test is provided for the following.
+#
 def calc_latlon(meta):
     temp = meta.loc[:, ['lat', 'lon']]
     temp['lats'] = temp['lat'].apply(str)
@@ -587,7 +599,9 @@ def calc_latlon(meta):
         pd.to_numeric(temp['lon1'], errors='coerce') / 60
     return meta
 
-
+#
+# No test is provided for the following.
+#
 def calc_range_latlon(meta, include_all_japan_lands):
     #
     # Consider put this in the Settings class
@@ -608,7 +622,9 @@ def calc_range_latlon(meta, include_all_japan_lands):
 ################################################################################
 #   Find the stations recorded intensity 7 or intensity 6
 ################################################################################
-
+#
+# No test is provided for the following.
+#
 def find_having_int_7(meta, dir_data):
     codes = list(meta['code'])
     count_int_7 = 0
@@ -623,7 +639,9 @@ def find_having_int_7(meta, dir_data):
                 having_int_7.append(code)
     return having_int_7
 
-
+#
+# No test is provided for the following.
+#
 def find_having_int_6(meta, dir_data):
     codes = list(meta['code'])
     count_int_7 = 0
@@ -658,7 +676,9 @@ def find_largest_files(dir_data):
 #
 ###############################################################################
 
-
+#
+# No test is provided for the following.
+#
 def fit_to_first_linear_part(ints_ot, suvf_ot):
     n_ot = len(ints_ot)
     if n_ot < 6:
@@ -759,31 +779,13 @@ def calc_corrected_ro(df_factor, ro):
     df_factor = pd.concat([df_int, df_factor, df_freq], axis=1)
     return df_factor
 
-
+#
+# No test is provided for the following.
+#
 def add_corrected_results_to_summary(summary, df_corrected):
     for intensity in [1, 2, 3, 4, 5, 6, 7]:
         idx = "int" + str(intensity) + "_roc"
         summary[idx] = df_corrected.at[intensity-1, "corrected"]
-    # df_sel = df_corrected[df_corrected["corrected"] > 0]
-    # corrected = df_sel["corrected"].values
-    # n = len(corrected)
-    # summary["slope_cor"] = np.nan
-    # summary["intercept_cor"] = np.nan
-    # summary["rvalue_cor"] = np.nan
-    # summary["pvalue_cor"] = np.nan
-    # summary["est7_cor"] = np.nan
-    # summary["est6p5_cor"] = np.nan
-    # summary["est6_cor"] = np.nan
-    # iror = IROR(corrected)
-    # res = iror.find_iror(1)
-    # if res is not None:
-    #     summary["slope_cor"] = res.slope
-    #     summary["intercept_cor"] = res.intercept
-    #     summary["rvalue_cor"] = res.rvalue
-    #     summary["pvalue_cor"] = res.pvalue
-    #     summary["est7_cor"] = 10 ** (res.intercept + res.slope * 7)
-    #     summary["est6p5_cor"] = 10 ** (res.intercept + res.slope * 6.5)
-    #     summary["est6_cor"] = 10 ** (res.intercept + res.slope * 6)
     return summary
 
 

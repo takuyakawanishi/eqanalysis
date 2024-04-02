@@ -19,19 +19,19 @@ class Settings:
 
     def __init__(self):
         self.draw_stationwise_figures = False
-        self.regs = pd.DataFrame(columns=['x-ax', 'y-ax', 'minint', 'maxint'])
-        self.reg_raw_show = False
-        self.reg_raw_start = 2
-        self.reg_raw_end = 4
-        self.reg_aas_show = True
-        self.reg_aas_start = 2
-        self.reg_aas_end = 4
+        # self.regs = pd.DataFrame(columns=['x-ax', 'y-ax', 'minint', 'maxint'])
+        # self.reg_raw_show = False
+        # self.reg_raw_start = 2
+        # self.reg_raw_end = 4
+        # self.reg_aas_show = True
+        # self.reg_aas_start = 2
+        # self.reg_aas_end = 4
         self.map_include_all_japan_lands = False
-        self.contour_to_draw = 'est7'
+        # self.contour_to_draw = 'est7'
         self.contour_log_scale = True
         self.contour_cmap = 'Reds'
         self.contour_lstep = .5
-        self.contour_lmin = None
+        self.contour_lmin = -4
         self.contour_lmax = None
         self.contour_plot_stations = False
         self.contour_station_size = 1
@@ -173,8 +173,6 @@ def draw_contour(meta, col, minus=True, log_scale=True, cmap='Reds',
 
     fig.add_axes(ax_cb)
     cb = plt.colorbar(contourf, cax=ax_cb)
-
-    # cb = plt.colorbar(contourf, shrink=0.75)
     cb.ax.set_title(colorbartitle)
     if plot_stations:
         ax.scatter(
@@ -252,7 +250,7 @@ def main():
     conf.contour_plot_int_6 = False
     conf.contour_log_scale = True
     conf.contour_cmap = "seismic"
-    conf.contour_colorbartitle = create_colorbar_title(conf.contour_to_draw)
+    conf.contour_colorbartitle = "$\\log_{10}(\\mathrm{ERO6+})$"
     conf.contour_alpha = 1
     conf.contour_plot_stations = False
     conf.contour_lmax = -1
@@ -284,8 +282,8 @@ def main():
     fn_est = \
         "peps/results/japan_cor_ERO6p_ge2_form_1996-04-01_to_2021-12-31.csv"
 
-    fn_est = \
-        "peps/results/japan_cor_ERO6p_ge2_form_1996-04-01_to_2011-03-10.csv"
+    # fn_est = \
+    #     "peps/results/japan_cor_ERO6p_ge2_form_1996-04-01_to_2011-03-10.csv"
     df_est = pd.read_csv(fn_est)
     df_est = df_est[df_est["ero6p"] > 0]
     df_est = df_est[df_est["duration"] > 5 * 365.2425]
@@ -302,8 +300,19 @@ def main():
 
         df_est.at[idx, "latitude"] = df_sel.at[0, "latitude"]
         df_est.at[idx, "longitude"] = df_sel.at[0, "longitude"]
-
+ 
     print(df_est.head(5))
+    print(len(df_est))
+    df_est = df_est.groupby(['latitude', 'longitude']).agg({'ero6p': ['max']})
+    # df_est.columns = df_est.columns.to_flat_index()
+    # df_est.columns = ['latitude', 'longitude', 'est6p5']
+    df_est = df_est.reset_index()
+    df_est.columns = df_est.columns.to_flat_index()
+    df_est.columns = ['latitude', 'longitude', 'ero6p']
+    print(df_est)
+    print(type(df_est))
+    # sys.exit()
+
     n_relevant_stations = len(df_est)
     print("Number of relevant stations = {}".format(n_relevant_stations))
     lal, lau, lol, lou = eqa.calc_range_latlon(
@@ -364,8 +373,15 @@ def main():
             conf.int7_dates[i_int7], xy=lonlat7, 
             xytext=(lonlat7[0] - 1.6, lonlat7[1] + 2.5 - movedown),
             xycoords=transform,
-            arrowprops=dict(arrowstyle="-", linewidth=1, shrinkA=0, shrinkB=0,
+            arrowprops=dict(arrowstyle="-", linewidth=1.6, shrinkA=0, shrinkB=0,
                             color=(0.9, 1, 0.7)), 
+            va="bottom", ha="right", zorder=3000)
+        ax.annotate(
+            conf.int7_dates[i_int7], xy=lonlat7, 
+            xytext=(lonlat7[0] - 1.6, lonlat7[1] + 2.5 - movedown),
+            xycoords=transform,
+            arrowprops=dict(arrowstyle="-", linewidth=.4, shrinkA=0, shrinkB=0,
+                            color=(0, 0, 0)), 
             va="bottom", ha="right", zorder=5000)
         # print(lonlat7)
         # ax.scatter(
