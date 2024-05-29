@@ -41,6 +41,7 @@ class FigSettings(object):
         # self.screen_background_color = '#fffaf9'  #
         # self.screen_background_color = '#ffedb3'  # クリーム
         self.screen_background_color = '#fffeee'
+        # self.screen_background_color = '#fdf9f4'
         #
         self.fig_width = 360
         self.fig_height = 360

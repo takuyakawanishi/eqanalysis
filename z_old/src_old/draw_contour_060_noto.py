@@ -43,7 +43,7 @@ def draw_scatter(meta, col, minus=True, log_scale=True, cmap='Reds',
                  lon_min=122, lon_max=154, lat_min=20, lat_max=46,
                  contour_alpha=1,
                  plot_stations=True, station_size=5, station_alpha=.5):
-    fig = plt.figure(figsize=(10.8, 10.8), facecolor=None)
+    fig = plt.figure(figsize=(3.3, 3.3), facecolor=None)
     ax = fig.add_axes(
         [0.025, 0.08, .9, .9],
         projection=ccrs.PlateCarree(central_longitude=180))
@@ -105,11 +105,11 @@ def draw_contour(meta, col, minus=True, log_scale=True, cmap='Reds',
                  ):
 
     # mloc= plt.MultipleLocator(5)
-    fig = plt.figure(figsize=(6.6, 0.88 * 6.6), facecolor=None, dpi=1200)
+    fig = plt.figure(figsize=(3.3, .88 * 3.3), facecolor=None)
     # ax = fig.add_subplot(
     #     1, 1, 1, projection=ccrs.PlateCarree(central_longitude=180))
     ax = fig.add_axes(
-        [0.02, 0.02, .92, .94],
+        [0.02, 0.02, .9, .9],
         projection=ccrs.PlateCarree())
     # ax.set_facecolor(color=None)
     fig.patch.set_alpha(0)
@@ -166,15 +166,17 @@ def draw_contour(meta, col, minus=True, log_scale=True, cmap='Reds',
     )
     ax.contour(
         lon_i, lat_i, val_i2, transform=ccrs.PlateCarree(), levels=levels,
-        linewidths=.3, colors='k', linestyles='-'
+        linewidths=.5, colors='k', linestyles='-'
     )
     divider = make_axes_locatable(ax)
-    ax_cb = divider.new_horizontal(size="4%", pad=0.05, axes_class=plt.Axes)
+    ax_cb = divider.new_horizontal(size="5%", pad=0.05, axes_class=plt.Axes)
 
     fig.add_axes(ax_cb)
     cb = plt.colorbar(contourf, cax=ax_cb)
-    cb.ax.set_title(colorbartitle, fontsize=9)
-    cb.ax.tick_params(direction="in", labelsize=9) 
+    cb.ax.set_title(colorbartitle, fontsize=6)
+    # cb.set_label('', fontdict={'size' : 6})
+    cb.ax.tick_params(direction="in",
+        labelsize=6) 
     if plot_stations:
         ax.scatter(
             longitude, latitude, c='k', transform=ccrs.PlateCarree(),
@@ -251,7 +253,6 @@ def main():
     conf.contour_plot_int_6 = False
     conf.contour_log_scale = True
     conf.contour_cmap = "seismic"
-    # conf.contour_cmap = "Reds"
     conf.contour_colorbartitle = "$\\log_{10}(\\mathrm{ERO6+})$"
     conf.contour_alpha = 1
     conf.contour_plot_stations = False
@@ -319,7 +320,10 @@ def main():
     print("Number of relevant stations = {}".format(n_relevant_stations))
     lal, lau, lol, lou = eqa.calc_range_latlon(
         df_est, conf.map_include_all_japan_lands)
-
+    lal = 34.2
+    lau = 37.7
+    lol = 135.0
+    lou = 138.5
     print("df_est")
     print(df_est.head(3))
     print("conf.contour_to_draw = ", conf.contour_to_draw)
@@ -368,29 +372,24 @@ def main():
         if i_int7 == 5:
             movedown = 1.6
         elif i_int7 == 7:
-            movedown = 1.2
-        elif i_int7 == 6:
             movedown = .8
+        elif i_int7 == 6:
+            movedown = -.4
         # https://stackoverflow.com/questions/25416600/why-the-annotate-worked-unexpected-here-in-cartopy
-        ax.annotate(
-            "", xy=lonlat7, 
-            xytext=(lonlat7[0] - 1.6, lonlat7[1] + 2.5 - movedown),
-            xycoords=transform,
-            arrowprops=dict(arrowstyle="-", linewidth=1.2, shrinkA=0, shrinkB=0,
-                            color=(0.9, 1, 0.7)), 
-            va="bottom", ha="right", zorder=3000)
-        ax.annotate(
-            "", xy=lonlat7, 
-            xytext=(lonlat7[0] - 1.6, lonlat7[1] + 2.5 - movedown),
-            xycoords=transform,
-            arrowprops=dict(arrowstyle="-", linewidth=.3, shrinkA=0, shrinkB=0,
-                            color=(0, 0, 0)), 
-            va="bottom", ha="right", zorder=5000, fontsize=8)        
         ax.annotate(
             conf.int7_dates[i_int7], xy=lonlat7, 
             xytext=(lonlat7[0] - 1.6, lonlat7[1] + 2.5 - movedown),
             xycoords=transform,
-            va="bottom", ha="right", zorder=5000, fontsize=7)
+            arrowprops=dict(arrowstyle="-", linewidth=1.6, shrinkA=0, shrinkB=0,
+                            color=(0.9, 1, 0.7)), 
+            va="bottom", ha="right", zorder=3000, clip_on=True)
+        ax.annotate(
+            conf.int7_dates[i_int7], xy=lonlat7, 
+            xytext=(lonlat7[0] - 1.6, lonlat7[1] + 2.5 - movedown),
+            xycoords=transform,
+            arrowprops=dict(arrowstyle="-", linewidth=.4, shrinkA=0, shrinkB=0,
+                            color=(0, 0, 0)), 
+            va="bottom", ha="right", zorder=5000, clip_on=True)
         # print(lonlat7)
         # ax.scatter(
         #     lonlat7[0], lonlat7[1], color=(0.6, 1, 0.4), 
@@ -403,8 +402,8 @@ def main():
     # fig.savefig(output_filename + ".png", dpi=300)
     # fig.savefig(output_filename + ".pdf")
     # print(output_filename)
-    filename = "peps/Figures_submit/Figure_6.pdf"
-    plt.savefig(filename, dpi=1200)
+    filename = "peps/figures_temp/" + "noto_" + fn_sub_1 + "_" + fn_sub_2 + ".pdf"
+    plt.savefig(filename)
     plt.show()
 
 

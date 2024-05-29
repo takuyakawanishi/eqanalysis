@@ -89,51 +89,51 @@ app.layout = dbc.Container([
                 html.Br(),
                 html.H5("Setting the period"),
                 html.H6("Primary plot"),
-                cfd.select_date_from(1996, 4, 1, 1919, 2021),
-                cfd.select_date_to(2021, 12, 31, 1919, 2021),
-                cfd.radioitems_yes_no(
-                    "  Show regression line?", 0, initial="Yes"),
+                # cfd.select_date_from(1996, 4, 1, 1919, 2021),
+                # cfd.select_date_to(2021, 12, 31, 1919, 2021),
+                # cfd.radioitems_yes_no(
+                #     "  Show regression line?", 0, initial="Yes"),
                 html.Br(),
-                html.Table([
-                    html.Tr([
-                        html.Td([html.Div("Another plot?")]),
-                        html.Td([
-                            dcc.RadioItems(
-                                id="if-second-plot",
-                                options=["Yes", "No"],
-                                value="No",
-                                inputStyle={'margin-right': '8px',
-                                            'margin-left': '8px',
-                                            'display': 'inline-block'}),
-                        ])
-                    ])
-                ], style={"height": "2.4rem", "align": "center"}),
-                cfd.select_date_from(1996, 4, 1, 1919, 2021, id=1),
-                cfd.select_date_to(2021, 12, 31, 1919, 2021, id=1),
-                cfd.radioitems_yes_no(
-                    "  Show regression line?", 1, initial="No"),
-                html.Br(),
-                html.Table([
-                    html.Tr([
-                        html.Td([html.Div("Yet another plot?")]),
-                        html.Td([
-                            dcc.RadioItems(
-                                id="if-third-plot",
-                                options=["Yes", "No"],
-                                value="No",
-                                inputStyle={'margin-right': '8px',
-                                            'margin-left': '8px',
-                                            'display': 'inline-block'}),
-                        ])
-                    ])
-                ], style={"height": "2.4rem", "align": "center"}),
-                cfd.select_date_from(1996, 4, 1, 1919, 2021, id=2),
-                cfd.select_date_to(2021, 12, 31, 1919, 2021, id=2),
-                cfd.radioitems_yes_no(
-                    "  Show regression line?", 2, initial="No"),
-                html.Br(),
-                html.Br(),
-            ], width={'size': 10}, sm=8, md=6, lg=4, xxl=3),
+                # html.Table([
+                #     html.Tr([
+                #         html.Td([html.Div("Another plot?")]),
+                #         html.Td([
+                #             dcc.RadioItems(
+                #                 id="if-second-plot",
+                #                 options=["Yes", "No"],
+                #                 value="No",
+                #                 inputStyle={'margin-right': '8px',
+                #                             'margin-left': '8px',
+                #                             'display': 'inline-block'}),
+                #         ])
+                #     ])
+                # ], style={"height": "2.4rem", "align": "center"}),
+                # cfd.select_date_from(1996, 4, 1, 1919, 2021, id=1),
+                # cfd.select_date_to(2021, 12, 31, 1919, 2021, id=1),
+                # cfd.radioitems_yes_no(
+                #     "  Show regression line?", 1, initial="No"),
+                # html.Br(),
+            #     html.Table([
+            #         html.Tr([
+            #             html.Td([html.Div("Yet another plot?")]),
+            #             html.Td([
+            #                 dcc.RadioItems(
+            #                     id="if-third-plot",
+            #                     options=["Yes", "No"],
+            #                     value="No",
+            #                     inputStyle={'margin-right': '8px',
+            #                                 'margin-left': '8px',
+            #                                 'display': 'inline-block'}),
+            #             ])
+            #         ])
+            #     ], style={"height": "2.4rem", "align": "center"}),
+            #     cfd.select_date_from(1996, 4, 1, 1919, 2021, id=2),
+            #     cfd.select_date_to(2021, 12, 31, 1919, 2021, id=2),
+            #     cfd.radioitems_yes_no(
+            #         "  Show regression line?", 2, initial="No"),
+            #     html.Br(),
+            #     html.Br(),
+            # ], width={'size': 10}, sm=8, md=6, lg=4, xxl=3),
             dbc.Col([
                 html.Br(),
                 html.H4("High Intensity Earthquakes"),
