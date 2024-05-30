@@ -1,4 +1,5 @@
 import datetime
+import pathlib
 # from dateutil.relativedelta import relativedelta
 from dash import Dash, dcc, dash_table, html, Input, Output, State
 from dash.dash_table.Format import Format, Scheme, Trim
@@ -11,10 +12,12 @@ import pandas as pd
 import scipy.stats
 import sys
 sys.path.append("./")
-sys.path.append("../")
-sys.path.append("../../")
-sys.path.append("../../../")
-sys.path.append("../../../../")
+# sys.path.append("../")
+# sys.path.append("../../")
+# sys.path.append("../../../")
+# sys.path.append("../../../../")
+
+
 import eqanalysis.src.eqa_takuyakawanishi.eqa as eqa
 import eqanalysis.dashfiles.layouts.fig_template as fig_template
 
@@ -25,9 +28,26 @@ import eqanalysis.dashfiles.layouts.fig_template as fig_template
 
 # DATABASE_START_DATE = '19190101'
 # DATABASE_END_DATE = '20191231'
+# print(pathlib.Path(__file__))
+# print(pathlib.Path(__file__).parent)
+root_eqanalysis = pathlib.Path(__file__).parent.parent.parent
+dir_data_trial = root_eqanalysis / 'data_2024/stationwise_2021/'
+print("dir_data_trial")
+print(dir_data_trial)
+file2read_meta_trial = root_eqanalysis / "data_2024" / \
+    "code_p_20231205_df.csv"
+file2read_org_trial = root_eqanalysis / "data_2024" / "intermediates" / \
+    "organized_code_2024_04.csv"
+print("file2read_meta_trial")
+print(file2read_meta_trial)
+print("file2read_org_trial")
+print(file2read_org_trial)
+
 DIR_DATA = 'eqanalysis/data_2024/stationwise_2021/'
-FILE2READ_META = 'eqanalysis/data_2024/code_p_20231205_df.csv'
-FILE2READ_ORG = "eqanalysis/data_2024/intermediates/organized_code_2024_04.csv"
+# FILE2READ_META = 'eqanalysis/data_2024/code_p_20231205_df.csv'
+# FILE2READ_ORG = "eqanalysis/data_2024/intermediates/organized_code_2024_04.csv"
+FILE2READ_META = file2read_meta_trial
+FILE2READ_ORG = file2read_org_trial
 cud_orange = "#e69900"  # (0.9, 0.6, 0)
 cud_skyblue = "#59b3e6"  # (.35, .7, .9)
 cud_green = "#009980"  # (0, .6, .5)
@@ -37,10 +57,10 @@ cudr_base_cream_ap3 = (255/255, 255/255, 128/255, .3)
 cudr_base_beige = (255/255, 202/255, 128/255)
 cudr_base_yellowgreen_ap3 = (216/255, 242/255, 85/255, .3)
 curd_base_brightblue_ap3 = (191/255, 228/255, 255/255, .3)
-tcbf10_1= '#1170aa'	 # Cerulean/Blue
+tcbf10_1 = '#1170aa'  # Cerulean/Blue
 tcbf10_2 = '#fc7d0b'  # Pumpkin/Orange
-tcbf10_3 = '#a3acb9'	# Dark Gray/Gray
-tcbf10_4 = '#57606c'	# Mortar/Grey
+tcbf10_3 = '#a3acb9'  # Dark Gray/Gray
+tcbf10_4 = '#57606c'  # Mortar/Grey
 tcbf10_5 = '#5Fa2ce'  # Picton Blue/Blue
 tcbf10_6 = '#c85200'  # Tenne (Tawny)/Orange
 tcbf10_7 = '#7b848f'  # Suva Grey/Grey
@@ -553,7 +573,6 @@ def check_station_is_in_the_database_and_get_available_period(_, str_code):
     State('set-datetime_0', 'columns')
 )
 def set_analysis_period(_, data, columns):
-    # print(data)
     dt_from = datetime.datetime(
         int(data[0]['yr']), int(data[0]['mo']), int(data[0]['day']),
         int(data[0]['hr']), int(data[0]['min']), int(data[0]['sec'])
@@ -616,8 +635,6 @@ def calculate_summary(station_prime, set_dict):
     df_fittings = df_fittings[[
         "intensity", "ro", "factor", "corrected", "fit_low", "fit_upp", 
         "intercept", "slope", "rvalue"]]
-    # print("df_fittings")
-    # print(df_fittings)
     dicts_fittings = []
     for i_int in range(7):
         df_fittings_i = df_fittings.iloc[i_int, :]
@@ -759,11 +776,9 @@ def estimate_ero6plus(dict_reg):
 )
 def find_regression_lines_ro(dict_tccf, reg_cor_params):
     df = pd.DataFrame.from_dict(dict_tccf)
-    # print(df)
     dfsel_raw = df[df["RRO"] > 0]
     dfsel_pf = df[df["PFCRO"] > 0]
     dfsel_uf = df[df["UFCRO"] > 0]
-    # print(dfsel_uf)
     li = reg_cor_params["lowestint"]
     dfsel_raw = dfsel_raw.loc[li - 1:]
     dfsel_pf = dfsel_pf.loc[li - 1:]
@@ -804,7 +819,6 @@ def find_regression_lines_ro(dict_tccf, reg_cor_params):
 def draw_riro(dict_tccf, reg_cor_params, dict_regs):
     df = pd.DataFrame.from_dict(dict_tccf)
     df_regs = pd.DataFrame.from_dict(dict_regs)
-    print(df_regs)
     df_sel = df[df["UFCRO"] > 0]
 
     reg_uf = scipy.stats.linregress(
@@ -998,8 +1012,6 @@ def fit_by_usr_i(dict_range, dict_intervals, dict_fittings, intensity):
     df_intervals = pd.DataFrame.from_dict(dict_intervals)
     df_fittings = pd.DataFrame.from_dict(dict_fittings)
     fit_i = df_fittings.iloc[intensity - 1].copy()    
-    # print("fit_i for intensity ", intensity, type(fit_i))
-    # print(fit_i)
     low = df_range.at[0, "low"]
     upp = df_range.at[0, "upp"]
     case = 0
@@ -1056,7 +1068,6 @@ def draw_intervals_i(dict_intervals_i, dict_fittings_i, intensity):
         if not df_intervals_i.empty:
             case = 1
     if case == 1:
-        # print(df_fittings_i)
         fit_low = df_fittings_i["fit_low"]
         fit_upp = df_fittings_i["fit_upp"]
         slope = df_fittings_i["slope"]
