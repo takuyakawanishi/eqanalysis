@@ -722,7 +722,7 @@ def find_correction_factor_internsity(intervals, suvf, thres):
     ser["rvalue"] = np.nan
     if n_intervals == 0:
         return ser
-    if n_overthres > 10:
+    if n_overthres >= 10:
         reg, factor, interval_1st_fit_upp = fit_to_first_linear_part(
             overthres, oversuvf)
         ser["intercept"] = reg.intercept
@@ -733,18 +733,18 @@ def find_correction_factor_internsity(intervals, suvf, thres):
             ser["factor"] = factor
         elif factor > 1:
             ser["factor"] = 1
-    elif n_overthres > 11:  # Disabled if > 10 or more
-        reg = scipy.stats.linregress(overthres, np.log10(oversuvf))
-        factor = 10 ** reg.intercept
-        if factor < 1:
-            ser["factor"] = factor
-            ser["intercept"] = reg.intercept
-            ser["slope"] = reg.slope
-            ser["rvalue"] = reg.rvalue
-        elif factor >= 1:
-            if n_intervals > 1:
-                factor = (n_overthres + 1) / (n_intervals + 1) 
-                ser["factor"] = factor
+    # elif n_overthres > 11:  # Disabled if > 10 or more
+    #     reg = scipy.stats.linregress(overthres, np.log10(oversuvf))
+    #     factor = 10 ** reg.intercept
+    #     if factor < 1:
+    #         ser["factor"] = factor
+    #         ser["intercept"] = reg.intercept
+    #         ser["slope"] = reg.slope
+    #         ser["rvalue"] = reg.rvalue
+    #     elif factor >= 1:
+    #         if n_intervals > 1:
+    #             factor = (n_overthres + 1) / (n_intervals + 1) 
+    #             ser["factor"] = factor
     else:
         factor = (n_overthres + 1) / (n_intervals + 1)
         ser["factor"] = factor
