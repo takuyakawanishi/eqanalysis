@@ -1,4 +1,5 @@
 import datetime
+import pathlib
 import numpy as np
 import pandas as pd
 import scipy.stats
@@ -9,6 +10,9 @@ sys.path.append("./eqanalysis/tests/stationwise_test")
 sys.path.append("./eqanalysis/")
 sys.path.append("./eqanalysis/tests")
 import eqanalysis.src.eqa_takuyakawanishi.eqa as eqa
+
+
+root_eqanalysis = pathlib.Path(__file__).parent.parent
 
 
 class TestIROR(unittest.TestCase):
@@ -28,7 +32,7 @@ class TestIROR(unittest.TestCase):
         exps = np.array([-0.26861648, 0.15271955, -0.94993336, 0.050066630])
         np.testing.assert_almost_equal(ress, exps, decimal=5)
 
-    def test_iror_upto_4(self):
+    def test_iror_upto_4_02(self):
         ros = np.array([0.6  , 0.55 , 0.26 , np.nan])
         this_iror = eqa.IROR(ros)
         res = this_iror.find_iror(2)
@@ -39,7 +43,21 @@ class TestIROR(unittest.TestCase):
         self.assertEqual(np.isnan(res.rvalue), True)
 
 
-class TestIntensityRateofOccurrence(unittest.TestCase):
+class TestUtilities(unittest.TestCase):
+
+    def test_station_data_filename_handler(self):
+        station = 1010541
+        # print(root_eqanalysis)
+        # print(type(root_eqanalysis))
+        dir_data_plp = root_eqanalysis / "tests" / "stationwise_test"
+        res = eqa.station_data_filename_handler(station, dir_data_plp)
+        self.assertEqual(type(res), type(root_eqanalysis))
+
+        dir_data = "eqanalysis/tests/stationwise_test/"
+        res = eqa.station_data_filename_handler(station, dir_data)
+
+
+class TestCountIntensityInDataframe(unittest.TestCase):
 
     def test_count_intensity_in_dataframe(self):
         df = pd.DataFrame(
@@ -54,7 +72,7 @@ class TestIntensityRateofOccurrence(unittest.TestCase):
 
 
 ################################################################################
-# TS version        
+# Test Preiods and datetime handling        
 ################################################################################
 
 class TestEqaForOrganizedTS(unittest.TestCase):
@@ -167,9 +185,6 @@ class TestEqaForOrganizedTS(unittest.TestCase):
         dfr.at[2, "day"] = 15
         pd.testing.assert_frame_equal(res, dfr)
     
-
-class TestEqaForOrganized02(unittest.TestCase):
-
     def test_find_datetime_beginning_01(self):
         dir_data = "./eqanalysis/tests/stationwise_test/"
         from_num = 999999999999
@@ -218,6 +233,17 @@ class TestEqaForOrganized02(unittest.TestCase):
             1000, str_from, datetime_end, dir_data=dir_data)
         self.assertEqual(res, datetime.datetime(1997, 12, 28, 23, 59, 0))
 
+    def test_find_operation_period_from_station_wise_data_ts(self):
+        station = 1010541
+        dir_data_plp = root_eqanalysis / "tests" / "stationwise_test"
+        res = eqa.find_operation_period_from_station_wise_data_ts(
+            station, dir_data_plp)
+        # print(res)
+        exp_beginning = "2011-01-01 12:00:00"
+        exp_end = "2017-12-31 23:59:59"
+        self.assertEqual(res[0], exp_beginning)
+        self.assertEqual(res[1], exp_end)
+
     def test_calc_datetime_b_datetime_e_duration(self):
         dir_data = "./eqanalysis/tests/stationwise_test/"
         meta = pd.DataFrame(
@@ -246,16 +272,47 @@ class TestEqaForOrganized02(unittest.TestCase):
                      "duration_ts"])
         pd.testing.assert_frame_equal(expected, res, check_exact=False)
 
+    def test_find_first_and_last_record_of_station(self):
+        station = 1010541
+        dir_data_plp = root_eqanalysis / "tests" / "stationwise_test"
+        res = eqa.find_first_and_last_record_of_station(station, dir_data_plp)
+        first = "2011-03-11 14:49:10"
+        last = "2017-11-21 16:30:08"
+        # print(res)
+        self.assertEqual(res[0], first)
+        self.assertEqual(res[1], last)
 
-# class MyTestCase(unittest.TestCase):
 
-#     def test_find_days_cros_the_intercept(self):
-#         x = [1, 2, 3, 4, 5]
-#         suvf = [.9, .8, .7, .6, .5]
-#         intercept = .55
-#         res = eqa.find_days_cros_the_intercept(x, suvf, intercept)
-#         res = list(res)
-#         self.assertListEqual(res, [4, 5])
+class TestCountingIntensities(unittest.TestCase):
+    
+    def test_take_data_subset_by_period_ts(self):
+        station = 1010541
+        dir_data_plp = root_eqanalysis / "tests" / "stationwise_test"
+        datetime_b = "2015-01-01 00:00:00"
+        datetime_e = "2021-12-31 23:59:59"
+        df = eqa.take_data_subset_by_period_ts(
+            station, datetime_b, datetime_e, dir_data_plp)
+        # print(df)
+        # print(df.shape)
+        self.assertEqual(df.shape, (24, 11))
+
+    def test_create_intensity_ro_table_of_period_ts(self):
+        dir_data = root_eqanalysis / "tests" / "stationwise_test"  
+        actual = [
+            [2120100, "1996-04-01 12:00:00", "2009-08-21 15:00:00", 4890],
+            [2120110, "2009-09-01 15:00:00", "2010-03-31 13:00:00", 210],
+            [2120101, "2010-03-31 13:00:00", "2021-12-31 23:59:59", 4293]
+        ]
+        df_actual = pd.DataFrame(
+            actual, columns=["station", "from", "to", "duration"]
+        )
+        # print(df_actual)
+        res = eqa.create_intensity_ro_table_of_period_ts(
+            df_actual, dir_data
+        )
+        # print(res)
+        # print(type(res))
+        self.assertEqual(res[1]["duration"], 9393)
 
 
 class TestIntervals(unittest.TestCase):
@@ -314,6 +371,23 @@ class TestIntervals(unittest.TestCase):
         self.assertEqual(len(res), 3)
         self.assertEqual(len(res[0]), 7)
 
+    def test_create_stationwise_dataframe_02(self):
+        dir_data = root_eqanalysis / "tests" / "stationwise_test"  
+        actual = [
+            [2120100, "1996-04-01 12:00:00", "2009-08-21 15:00:00", 4890],
+            [2120110, "2009-09-01 15:00:00", "2010-03-31 13:00:00", 210],
+            [2120101, "2010-03-31 13:00:00", "2021-12-31 23:59:59", 4293]
+        ]
+        df_actual = pd.DataFrame(
+            actual, columns=["station", "from", "to", "duration"]
+        )
+        res = eqa.create_stationwise_dataframe(df_actual, dir_data)
+
+        exp_length_res = 3
+        exp_length_res0 = 7
+        self.assertEqual(len(res), exp_length_res)
+        self.assertEqual(len(res[0]), exp_length_res0)
+
     def test_create_interval_datasets_ts(self):
         station_prime = 2120100
         df_org = pd.read_csv(
@@ -360,7 +434,7 @@ class TestIntervals(unittest.TestCase):
         pd.testing.assert_frame_equal(res_d3, exp_d3)
 
 
-class TestEqaForLatLons(unittest.TestCase):
+class TestLatLons(unittest.TestCase):
 
     def test_calc_latitude(self):
         lat = 3448
@@ -379,34 +453,6 @@ class TestEqaForLatLons(unittest.TestCase):
         res = eqa.find_lonlat_for_station(3900131, df)
         expected = [136.766666666, 37.2833333333]
         np.testing.assert_almost_equal(res, expected, decimal=6)
-
-
-    # def test_calc_intervals(self):
-    #     dir_data = "eqanalysis/tests/stationwise_test/"
-    #     station = 1010541
-    #     df = pd.read_csv(dir_data + "st_" + str(station) + ".txt")
-    #     # print(df)
-    #     datetime_b = "2012-01-01 00:00:00"
-    #     datetime_e = "2013-12-31 23:59:59"
-    #     res = eqa.calc_intervals(df, datetime_b, datetime_e)
-    #     # print(res)
-    #     res_df_3 = res[2]
-    #     res_df_2 = res[1]
-    #     exp_int_3 = [[161.000937, 1., 1]]
-    #     exp_df_3 = pd.DataFrame(
-    #         exp_int_3, columns=["interval", "suvf", "counts"]
-    #     )
-    #     exp_int_2 = [[34.738206, 1., 5],
-    #                  [35.506968, 0.8, 4],
-    #                  [57.248183, 0.6, 3],
-    #                  [93.967708, 0.4, 2],
-    #                  [103.752755, 0.2, 1]
-    #     ]
-    #     exp_df_2 = pd.DataFrame(
-    #         exp_int_2, columns=["interval", "suvf", "counts"]
-    #     )
-    #     pd.testing.assert_frame_equal(res_df_3, exp_df_3)
-    #     pd.testing.assert_frame_equal(res_df_2, exp_df_2)
 
 
 class TestForeshockAftershockSwarmCorrection(unittest.TestCase):
@@ -514,6 +560,21 @@ class TestWithRealData(unittest.TestCase):
                 df_org, 3500000, set_dict, dir_data=dir_data)
         ro = np.array(ro.astype(np.float64))
         df_factor = eqa.find_correction_factor(dfs_intervals)
+
+
+
+
+
+    # def test_find_having_int_7(self):
+    #     #
+    #     # TODO use "stationwise_test"
+    #     #
+    #     fn_meta = root_eqanalysis / "data_2024" / "code_p_20231205_df.csv"
+    #     meta = pd.read_csv(fn_meta)
+    #     dir_data = root_eqanalysis / "data_2024" / "stationwise_2021"
+    #     res = eqa.find_having_int_7(meta, dir_data)
+    #     print(res)
+
 
 
 if __name__ == '__main__':

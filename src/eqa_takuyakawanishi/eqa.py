@@ -1,4 +1,5 @@
 import datetime
+import pathlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -67,11 +68,19 @@ def clean_alt_list(list_):
     list_ = list_.replace(']', '"]')
     return list_
 
+# For pathlib
+def station_data_filename_handler(station, dir_data):
+    if isinstance(dir_data, pathlib.Path):
+        filename_st = 'st_' + str(station) + '.txt'
+        # print(filename_st)
+        filename = dir_data / filename_st
+    else:
+        filename = dir_data + 'st_' + str(station) + '.txt'
+    return filename
 
 ################################################################################
-#  Intensity and ro
+#  Count intensity in dataframe
 ################################################################################
-
 
 def count_intensity_in_dataframe(df):
     df["intensity"] = df["intensity"].astype(str)
@@ -97,6 +106,10 @@ def count_intensity_in_dataframe(df):
         cum_counts[i] = counts[i:].sum()
     return cum_counts
 
+
+################################################################################
+#  Periods, datetime handling (TS)
+################################################################################
 
 def find_available_periods_ts(meta, station):
     meta_1 = meta[meta["code_prime"] == station]
@@ -155,7 +168,7 @@ def calc_periods_durations_ts(df_available, set_period):
 
 def add_datetime_column_to_dataframe(df):
     """
-    Feb 2. 2024, df["second"] == '  . ' added.
+    Feb 2, 2024, df["second"] == '  . ' added.
     """
     df = df.drop(df[df.day == "  "].index)
     df = df.drop(df[df.day == '00'].index)
@@ -181,102 +194,7 @@ def add_datetime_column_to_dataframe(df):
         sys.exit()
 
 
-#
-# No test is provided for the following.
-#
-def take_data_subset_by_period_ts(station, datetime_b, datetime_e, dir_data):
-    try:
-        df = pd.read_csv(dir_data + 'st_' + str(station) + '.txt')
-    except Exception as ex:
-        df = None
-        print(ex, " at ", station)
-    else:
-        date_b = datetime.datetime.strptime(datetime_b, "%Y-%m-%d %H:%M:%S")
-        date_e = datetime.datetime.strptime(datetime_e, "%Y-%m-%d %H:%M:%S")
-        df = add_datetime_column_to_dataframe(df)
-        df = df[(df["date_time"] >= date_b) & (df["date_time"] <= date_e)]
-    return df
-
-
-#
-# No test is provided for the following.
-#
-# def create_intensity_frequency_table_of_period_ts(actual, dir_data='./'):
-#     return create_intensity_ro_table_of_period_ts(actual, dir_data=dir_data)
-
-def create_intensity_ro_table_of_period_ts(actual, dir_data='./'):
-    #print(actual)
-    columns = ["int1", "int2", "int3", "int4", "int5", "int6", "int7"]
-    stations = actual["station"].values
-    cum_counts_s = []
-    for i_station, station in enumerate(stations):
-        if actual.at[i_station, "duration"] == 0:
-            cum_counts = np.zeros(7)
-        else:
-            date_b = actual.at[i_station, "from"]
-            date_e = actual.at[i_station, "to"]
-            df = take_data_subset_by_period_ts(
-                station, date_b, date_e, dir_data)
-            if df is not None:
-                cum_counts = count_intensity_in_dataframe(df)
-            else:
-                cum_counts = np.zeros(7)
-        cum_counts_s.append(cum_counts)
-    df_c = pd.DataFrame(cum_counts_s, columns=columns)
-    actual_res = pd.concat([actual, df_c], axis=1)
-    actual_res_sum = actual_res.sum()
-    actual_res_sum["froms"] = list(actual["from"])
-    actual_res_sum["tos"] = list(actual["to"])
-    duration = actual_res_sum["duration"]
-    actual_res_sum = actual_res_sum.drop(labels=['from', 'to'])
-    ro = actual_res_sum[columns]
-    ro = ro[ro > 0] / duration * 365.2425
-    return ro, actual_res_sum
-
-# def find_intensity_frequency_regression_summarize_ts(
-#         meta, station, set_dict, dir_data='./'):
-#     return find_intensity_ro_regression_summarize_ts(\
-#         meta, station, set_dict, dir_data='./')
-
-def find_intensity_ro_regression_summarize_ts(
-        meta, station, set_dict, dir_data='./'):
-    return find_intensity_ro_summarize_ts(
-        meta, station, set_dict, dir_data='./')
-#
-# No test is provided for the following.
-#
-def find_intensity_ro_summarize_ts(
-        meta, station, set_dict, dir_data='./'):
-    meta_1 = meta[meta["code_prime"] == station]
-    meta_1 = meta_1.reset_index(drop=True)
-    available = find_available_periods_meta_1_ts(meta_1)
-    actual = calc_periods_durations_ts(available, set_dict)
-    summary_pre = pd.Series()
-    summary_pre["station"] = station
-    summary_pre["latitude"] = calc_latitude(meta_1.at[0, "lat"])
-    summary_pre["longitude"] = calc_longitude(meta_1.at[0, "lon"])
-    summary_pre["address"] = meta_1.at[0, "address"]
-    ro, summary = \
-        create_intensity_ro_table_of_period_ts(actual, dir_data)
-    summary = pd.concat([summary_pre, summary])
-    return ro, summary
-
-#
-# No test is provided for the following.
-#
-def find_first_and_last_record_of_station(station, dir_data):
-    fn = dir_data + "st_" + str(station) + ".txt"
-    df = pd.read_csv(fn)
-    df = add_datetime_column_to_dataframe(df)
-    # print(df)
-    first = datetime.datetime.strftime(
-        df.at[df.index[0], "date_time"], "%Y-%m-%d %H:%M:%S")
-    last = datetime.datetime.strftime(
-        df.at[df.index[-1], "date_time"], "%Y-%m-%d %H:%M:%S")
-    return [first, last]
-
-
-def find_datetime_beginning(code, num_from, datetime_beginning, dir_data='./'):
+def find_datetime_beginning(code, num_from, datetime_beginning, dir_data):
     datetime_beginning = datetime.datetime.strptime(
         datetime_beginning, "%Y-%m-%d %H:%M:%S")
     str_from = str(num_from)
@@ -311,7 +229,7 @@ def find_datetime_beginning(code, num_from, datetime_beginning, dir_data='./'):
     return datetime_beginning
 
 
-def find_datetime_end(code, to, datetime_end, dir_data='./'):
+def find_datetime_end(code, to, datetime_end, dir_data):
     datetime_end = datetime.datetime.strptime(
         datetime_end, "%Y-%m-%d %H:%M:%S")
     if np.isnan(to):
@@ -345,13 +263,9 @@ def find_datetime_end(code, to, datetime_end, dir_data='./'):
         datetime_end = datetime_end_read
     return datetime_end
 
-#
-# No test is provided for the following.
-# Maybe we can remove this from eqa, it is used only
-# in the data preprocessing.
-#
+
 def find_operation_period_from_station_wise_data_ts(code, dir_data):
-    fn = dir_data + 'st_' + str(code) + '.txt'
+    fn = station_data_filename_handler(code, dir_data)
     df = pd.read_csv(fn)
     beginning = str(df['year'].min()) + '-01-01 12:00:00'
     end = str(df['year'].max()) + '-12-31 23:59:59'
@@ -359,7 +273,7 @@ def find_operation_period_from_station_wise_data_ts(code, dir_data):
 
 
 def calc_datetime_b_datetime_e_duration(
-        meta_in, date_beginning, date_end, dir_data='./'):
+        meta_in, date_beginning, date_end, dir_data):
     meta = meta_in.copy()
     codes = list(meta['code'])
     for i_code, code in enumerate(codes):
@@ -373,58 +287,92 @@ def calc_datetime_b_datetime_e_duration(
     return meta
 
 
+def find_first_and_last_record_of_station(station, dir_data):
+    fn = station_data_filename_handler(station, dir_data)
+    df = pd.read_csv(fn)
+    df = add_datetime_column_to_dataframe(df)
+    # print(df)
+    first = datetime.datetime.strftime(
+        df.at[df.index[0], "date_time"], "%Y-%m-%d %H:%M:%S")
+    last = datetime.datetime.strftime(
+        df.at[df.index[-1], "date_time"], "%Y-%m-%d %H:%M:%S")
+    return [first, last]
+
+
 ################################################################################
-#   Find high intensity earthquakes
+#  Counting intensities and other operations
 ################################################################################
+
+def take_data_subset_by_period_ts(station, datetime_b, datetime_e, dir_data):
+    filename = station_data_filename_handler(station, dir_data)
+    try:
+        df = pd.read_csv(filename)
+    except Exception as ex:
+        df = None
+        print(ex, " at ", station)
+    else:
+        date_b = datetime.datetime.strptime(datetime_b, "%Y-%m-%d %H:%M:%S")
+        date_e = datetime.datetime.strptime(datetime_e, "%Y-%m-%d %H:%M:%S")
+        df = add_datetime_column_to_dataframe(df)
+        df = df[(df["date_time"] >= date_b) & (df["date_time"] <= date_e)]
+    return df
+
+
+def create_intensity_ro_table_of_period_ts(actual, dir_data):
+    # print(actual)
+    columns = ["int1", "int2", "int3", "int4", "int5", "int6", "int7"]
+    stations = actual["station"].values
+    cum_counts_s = []
+    for i_station, station in enumerate(stations):
+        if actual.at[i_station, "duration"] == 0:
+            cum_counts = np.zeros(7)
+        else:
+            date_b = actual.at[i_station, "from"]
+            date_e = actual.at[i_station, "to"]
+            df = take_data_subset_by_period_ts(
+                station, date_b, date_e, dir_data)
+            if df is not None:
+                cum_counts = count_intensity_in_dataframe(df)
+            else:
+                cum_counts = np.zeros(7)
+        cum_counts_s.append(cum_counts)
+    df_c = pd.DataFrame(cum_counts_s, columns=columns)
+    actual_res = pd.concat([actual, df_c], axis=1)
+    actual_res_sum = actual_res.sum()
+    actual_res_sum["froms"] = list(actual["from"])
+    actual_res_sum["tos"] = list(actual["to"])
+    duration = actual_res_sum["duration"]
+    actual_res_sum = actual_res_sum.drop(labels=['from', 'to'])
+    ro = actual_res_sum[columns]
+    ro = ro[ro > 0] / duration * 365.2425
+    return ro, actual_res_sum
+
+#
+# Alias for backward compatibility
+#
+def find_intensity_ro_regression_summarize_ts(
+        meta, station, set_dict, dir_data):
+    return find_intensity_ro_summarize_ts(
+        meta, station, set_dict, dir_data)
 
 #
 # No test is provided for the following.
 #
-def extract_quakes_by_intensities(
-        meta, intensities, dir_data):
-    codes = list(meta["code_prime"])
-    count = 0
-    dfs = None
-    for i_code, code in enumerate(codes):
-        df = None
-        try:
-            df = find_intensities(
-                meta, code, intensities, dir_data=dir_data)
-            df["code_prime"] = code
-        except Exception as ex:
-            print(ex)
-        if df is not None:
-            if not df.empty:
-                if count == 0:
-                    dfs = df
-                    count += 1
-                else:
-                    dfs = pd.concat([dfs, df], axis=0)
-    return dfs
-
-#
-# No test is provided for the following
-#
-
-def find_intensities(meta, station, intensities, dir_data="./"):
-    available = find_available_periods_ts(meta, station)
-    stations = available["station"]
-    df_sub_s = []
-    for station in stations:
-        filename = dir_data + "st_" + str(station) + ".txt"
-        df = pd.read_csv(filename)
-        df["intensity"] = df["intensity"].astype(str)
-        for intensity in intensities:
-            idx = df.index[df["intensity"] == intensity]
-            df_sub = df.loc[idx]
-            if df_sub is not None:
-                if not df_sub.empty:
-                    df_sub_s.append(df_sub)
-    df_ext = None
-    if len(df_sub_s) != 0:
-        df_ext = pd.concat(df_sub_s, axis=0)
-        df_ext = df_ext.sort_values(by="intensity", ascending=False)
-    return df_ext
+def find_intensity_ro_summarize_ts(
+        meta, station, set_dict, dir_data):
+    meta_1 = meta[meta["code_prime"] == station]
+    meta_1 = meta_1.reset_index(drop=True)
+    available = find_available_periods_meta_1_ts(meta_1)
+    actual = calc_periods_durations_ts(available, set_dict)
+    summary_pre = pd.Series()
+    summary_pre["station"] = station
+    summary_pre["latitude"] = calc_latitude(meta_1.at[0, "lat"])
+    summary_pre["longitude"] = calc_longitude(meta_1.at[0, "lon"])
+    summary_pre["address"] = meta_1.at[0, "address"]
+    ro, summary = \
+        create_intensity_ro_table_of_period_ts(actual, dir_data)
+    summary = pd.concat([summary_pre, summary])
+    return ro, summary
 
 
 ###############################################################################
@@ -477,7 +425,8 @@ def create_stationwise_dataframe(actual, dir_data):
     stations = list(actual["station"])
     dfsts = []
     for station in stations:
-        dfsts.append(pd.read_csv(dir_data + "st_" + str(station) + ".txt"))
+        fn = station_data_filename_handler(station, dir_data)
+        dfsts.append(pd.read_csv(fn))
     diss = []
     for i_st, station in enumerate(stations):
         d7, d6, d5, d4, d3, d2, d1 = create_subdfs_by_intensities_essentials(
@@ -622,6 +571,8 @@ def calc_range_latlon(meta, include_all_japan_lands):
 ################################################################################
 #   Find the stations recorded intensity 7 or intensity 6
 ################################################################################
+
+
 #
 # No test is provided for the following.
 #
@@ -631,9 +582,11 @@ def find_having_int_7(meta, dir_data):
     having_int_7 = []
     for code in codes:
         try:
-            df = pd.read_csv(dir_data + 'st_' + str(code) + '.txt')
+            fn = station_data_filename_handler(code, dir_data)
+            df = pd.read_csv(fn)
         except Exception as ex:
-            print(ex)
+            # print(ex)
+            pass
         else:
             if '7' in set(df['intensity']):
                 having_int_7.append(code)
@@ -779,9 +732,7 @@ def calc_corrected_ro(df_factor, ro):
     df_factor = pd.concat([df_int, df_factor, df_freq], axis=1)
     return df_factor
 
-#
-# No test is provided for the following.
-#
+
 def add_corrected_results_to_summary(summary, df_corrected):
     for intensity in [1, 2, 3, 4, 5, 6, 7]:
         idx = "int" + str(intensity) + "_roc"
@@ -789,12 +740,15 @@ def add_corrected_results_to_summary(summary, df_corrected):
     return summary
 
 
+#
+# No test is provided for the following.
+#
 def do_aftershock_correction(df_org, station_prime, set_dict, dir_data):
     dfs_intervals = create_interval_datasets_ts(
         df_org, station_prime, set_dict, dir_data)
     ro, summary = \
         find_intensity_ro_summarize_ts(
-            df_org, station_prime, set_dict, dir_data=dir_data)
+            df_org, station_prime, set_dict, dir_data)
     ro = np.array(ro.astype(np.float64))
     df_factor = find_correction_factor(dfs_intervals)  #thres_int=[5, 10, 20, 40]
     df_corrected = calc_corrected_ro(df_factor, ro)

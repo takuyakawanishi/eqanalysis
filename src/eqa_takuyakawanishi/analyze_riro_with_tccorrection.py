@@ -12,13 +12,8 @@ import pandas as pd
 import scipy.stats
 import sys
 sys.path.append("./")
-# sys.path.append("../")
-# sys.path.append("../../")
-# sys.path.append("../../../")
-# sys.path.append("../../../../")
-
-
-import eqanalysis.src.eqa_takuyakawanishi.eqa as eqa
+sys.path.append("../../../")
+import eqa 
 import eqanalysis.dashfiles.layouts.fig_template as fig_template
 
 
@@ -26,28 +21,17 @@ import eqanalysis.dashfiles.layouts.fig_template as fig_template
 #  Global Constants and Variables
 ################################################################################
 
-# DATABASE_START_DATE = '19190101'
-# DATABASE_END_DATE = '20191231'
-# print(pathlib.Path(__file__))
-# print(pathlib.Path(__file__).parent)
 root_eqanalysis = pathlib.Path(__file__).parent.parent.parent
-dir_data_trial = root_eqanalysis / 'data_2024/stationwise_2021/'
-print("dir_data_trial")
-print(dir_data_trial)
-file2read_meta_trial = root_eqanalysis / "data_2024" / \
+file2read_meta_pl = root_eqanalysis / "data_2024" / \
     "code_p_20231205_df.csv"
-file2read_org_trial = root_eqanalysis / "data_2024" / "intermediates" / \
+file2read_org_pl = root_eqanalysis / "data_2024" / "intermediates" / \
     "organized_code_2024_04.csv"
-print("file2read_meta_trial")
-print(file2read_meta_trial)
-print("file2read_org_trial")
-print(file2read_org_trial)
-
-DIR_DATA = 'eqanalysis/data_2024/stationwise_2021/'
+# DIR_DATA = 'eqanalysis/data_2024/stationwise_2021/'
 # FILE2READ_META = 'eqanalysis/data_2024/code_p_20231205_df.csv'
 # FILE2READ_ORG = "eqanalysis/data_2024/intermediates/organized_code_2024_04.csv"
-FILE2READ_META = file2read_meta_trial
-FILE2READ_ORG = file2read_org_trial
+DIR_DATA = root_eqanalysis / "data_2024" / "stationwise_2021"
+FILE2READ_META = file2read_meta_pl
+FILE2READ_ORG = file2read_org_pl
 cud_orange = "#e69900"  # (0.9, 0.6, 0)
 cud_skyblue = "#59b3e6"  # (.35, .7, .9)
 cud_green = "#009980"  # (0, .6, .5)
