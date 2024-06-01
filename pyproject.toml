@@ -1,0 +1,19 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "eqanalysis"
+version = "0.1.0"
+authors = [
+    { name = "Takuya Kawanishi", email="kawanishi@se.kanazawa-u.ac.jp"},
+]
+description = "A package for analyze the relationship between intensitis and rates of occurrences of earthquakes."
+readme = "README.md"
+requires-python = ">3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: MIT License",
+    "Operating System :: OS Independent",
+]
+
