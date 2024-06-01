@@ -5,25 +5,22 @@ import numpy as np
 import pandas as pd
 import scipy.stats
 import scipy.ndimage as ndimage
-import time
-import warnings
 import sys
 
 
 class Settings:
 
     def __init__(self):
-        self.date_beginning = '1919-01-01'
-        self.date_end = '2100-12-31'
+        self.date_beginning = "1919-01-01"
+        self.date_end = "2100-12-31"
         self.datetime_beginning = "1919-01-01 12:00:00"
         dt_now = datetime.datetime.now()
-        self.datetime_end = datetime.datetime.strftime(
-            dt_now, "%Y-%m-%d %H:%M:%S")
+        self.datetime_end = datetime.datetime.strftime(dt_now, "%Y-%m-%d %H:%M:%S")
         self.range_exp_fit_low = [20, 20, 50, 50, 50, 50, 50]
         self.range_exp_fit_upp = [100, 100, 1000, 1000, 1000, 1000, 1000]
 
 
-class IROR():
+class IROR:
 
     def __init__(self, ros):
         self.ros = ros
@@ -32,7 +29,7 @@ class IROR():
         self.li = li
         self.ros_trn = self.ros[self.ros > 0]
         self.ros_log10 = np.log10(self.ros_trn)
-        n_fit = len(self.ros_trn[li - 1:])
+        n_fit = len(self.ros_trn[li - 1 :])
         intensities = np.arange(n_fit) + li
         if n_fit == 1:
             print("Only one point for iror, no relation can be calculated.")
@@ -47,14 +44,14 @@ class IROR():
             self.intercept_stderr = np.nan
             return self
         elif n_fit > 2:
-            res = scipy.stats.linregress(
-                intensities, self.ros_log10[li - 1:]
-            )
+            res = scipy.stats.linregress(intensities, self.ros_log10[li - 1 :])
             return res
+
 
 ################################################################################
 #  Utility
 ################################################################################
+
 
 def round_to_k(x, k):
     return round(x, -int(np.floor(np.log10(abs(x)))) - 1 + k)
@@ -63,24 +60,27 @@ def round_to_k(x, k):
 # The following is from
 # https://towardsdatascience.com/dealing-with-list-values-in-pandas-dataframes-a177e534f173
 def clean_alt_list(list_):
-    list_ = list_.replace(', ', '","')
-    list_ = list_.replace('[', '["')
-    list_ = list_.replace(']', '"]')
+    list_ = list_.replace(", ", '","')
+    list_ = list_.replace("[", '["')
+    list_ = list_.replace("]", '"]')
     return list_
+
 
 # For pathlib
 def station_data_filename_handler(station, dir_data):
     if isinstance(dir_data, pathlib.Path):
-        filename_st = 'st_' + str(station) + '.txt'
+        filename_st = "st_" + str(station) + ".txt"
         # print(filename_st)
         filename = dir_data / filename_st
     else:
-        filename = dir_data + 'st_' + str(station) + '.txt'
+        filename = dir_data + "st_" + str(station) + ".txt"
     return filename
+
 
 ################################################################################
 #  Count intensity in dataframe
 ################################################################################
+
 
 def count_intensity_in_dataframe(df):
     df["intensity"] = df["intensity"].astype(str)
@@ -91,12 +91,16 @@ def count_intensity_in_dataframe(df):
     counts[1] = len(df[df["intensity"] == "2"])
     counts[2] = len(df[df["intensity"] == "3"])
     counts[3] = len(df[df["intensity"] == "4"])
-    counts[4] = len(df[df["intensity"] == "5"]) + \
-        len(df[df["intensity"] == "A"]) + \
-        len(df[df["intensity"] == "B"])
-    counts[5] = len(df[df["intensity"] == "6"]) + \
-        len(df[df["intensity"] == "C"]) + \
-        len(df[df["intensity"] == "D"])
+    counts[4] = (
+        len(df[df["intensity"] == "5"])
+        + len(df[df["intensity"] == "A"])
+        + len(df[df["intensity"] == "B"])
+    )
+    counts[5] = (
+        len(df[df["intensity"] == "6"])
+        + len(df[df["intensity"] == "C"])
+        + len(df[df["intensity"] == "D"])
+    )
     counts[6] = len(df[df["intensity"] == "7"])
     # print(counts, counts.sum(), len(df))
     if counts.sum() != len(df):
@@ -111,11 +115,12 @@ def count_intensity_in_dataframe(df):
 #  Periods, datetime handling (TS)
 ################################################################################
 
+
 def find_available_periods_ts(meta, station):
     meta_1 = meta[meta["code_prime"] == station]
     meta_1 = meta_1.reset_index(drop=True)
     return find_available_periods_meta_1_ts(meta_1)
-   
+
 
 def find_available_periods_meta_1_ts(meta_1):
     dfsp = pd.DataFrame(columns=["station", "from", "to"])
@@ -171,23 +176,24 @@ def add_datetime_column_to_dataframe(df):
     Feb 2, 2024, df["second"] == '  . ' added.
     """
     df = df.drop(df[df.day == "  "].index)
-    df = df.drop(df[df.day == '00'].index)
-    df.loc[df['day'] == '//', 'day'] = 15
-    df.loc[df['hour'] == '//', 'hour'] = 12
-    df.loc[df['hour'] == '  ', 'hour'] = 12
-    df.loc[df['minute'] == '//', 'minute'] = 0
-    df.loc[df['minute'] == '  ', 'minute'] = 0
-    df.loc[df['second'] == '//. ', 'second'] = 0
-    df.loc[df['second'] == '  . ', 'second'] = 0
-    df.loc[df['second'] == '2 . ', 'second'] = 0
-    df.loc[df['second'] == '3 . ', 'second'] = 0
-    df.loc[df['second'] == '4 . ', 'second'] = 0
-    df.loc[df['second'] == '5 . ', 'second'] = 0
-    df.loc[df['second'] == '7 . ', 'second'] = 0
-    df.loc[df['second'] == '0 . ', 'second'] = 0
+    df = df.drop(df[df.day == "00"].index)
+    df.loc[df["day"] == "//", "day"] = 15
+    df.loc[df["hour"] == "//", "hour"] = 12
+    df.loc[df["hour"] == "  ", "hour"] = 12
+    df.loc[df["minute"] == "//", "minute"] = 0
+    df.loc[df["minute"] == "  ", "minute"] = 0
+    df.loc[df["second"] == "//. ", "second"] = 0
+    df.loc[df["second"] == "  . ", "second"] = 0
+    df.loc[df["second"] == "2 . ", "second"] = 0
+    df.loc[df["second"] == "3 . ", "second"] = 0
+    df.loc[df["second"] == "4 . ", "second"] = 0
+    df.loc[df["second"] == "5 . ", "second"] = 0
+    df.loc[df["second"] == "7 . ", "second"] = 0
+    df.loc[df["second"] == "0 . ", "second"] = 0
     try:
-        df['date_time'] = pd.to_datetime(
-            df[['year', 'month', 'day', 'hour', 'minute', 'second']])
+        df["date_time"] = pd.to_datetime(
+            df[["year", "month", "day", "hour", "minute", "second"]]
+        )
         return df
     except Exception as ex:
         print(ex)
@@ -196,42 +202,43 @@ def add_datetime_column_to_dataframe(df):
 
 def find_datetime_beginning(code, num_from, datetime_beginning, dir_data):
     datetime_beginning = datetime.datetime.strptime(
-        datetime_beginning, "%Y-%m-%d %H:%M:%S")
+        datetime_beginning, "%Y-%m-%d %H:%M:%S"
+    )
     str_from = str(num_from)
     year = str_from[0:4]
     month = str_from[4:6]
     day = str_from[6:8]
     hour = str_from[8:10]
     minute = str_from[10:12]
-    if year == '9999':
+    if year == "9999":
         stationwise_from, _ = find_operation_period_from_station_wise_data_ts(
-            code, dir_data)
+            code, dir_data
+        )
         datetime_beginning_read = datetime.datetime.strptime(
-            stationwise_from, "%Y-%m-%d %H:%M:%S")
+            stationwise_from, "%Y-%m-%d %H:%M:%S"
+        )
     else:
-        if month == '99':
-            month = '01'
-        if day == '99':
-            day = '01'
-        if hour == '99':
-            hour = '12'
-        if minute == '99':
-            minute = '00'
+        if month == "99":
+            month = "01"
+        if day == "99":
+            day = "01"
+        if hour == "99":
+            hour = "12"
+        if minute == "99":
+            minute = "00"
         year = int(year)
         month = int(month)
         day = int(day)
         hour = int(hour)
         minute = int(minute)
-        datetime_beginning_read = datetime.datetime(
-            year, month, day, hour, minute, 0)
+        datetime_beginning_read = datetime.datetime(year, month, day, hour, minute, 0)
     if datetime_beginning_read > datetime_beginning:
         datetime_beginning = datetime_beginning_read
     return datetime_beginning
 
 
 def find_datetime_end(code, to, datetime_end, dir_data):
-    datetime_end = datetime.datetime.strptime(
-        datetime_end, "%Y-%m-%d %H:%M:%S")
+    datetime_end = datetime.datetime.strptime(datetime_end, "%Y-%m-%d %H:%M:%S")
     if np.isnan(to):
         return datetime_end
     else:
@@ -241,18 +248,18 @@ def find_datetime_end(code, to, datetime_end, dir_data):
         day = str_to[6:8]
         hour = str_to[8:10]
         minute = str_to[10:12]
-    if year == '9999':
+    if year == "9999":
         _, end = find_operation_period_from_station_wise_data_ts(code, dir_data)
         datetime_end_read = datetime.datetime.strptime(end, "%Y-%m-%d %H:%M:%S")
     else:
-        if month == '99':
-            month = '12'
-        if day == '99':
-            day = '28'
-        if hour == '99':
-            hour = '23'
-        if minute == '99':
-            minute = '59'
+        if month == "99":
+            month = "12"
+        if day == "99":
+            day = "28"
+        if hour == "99":
+            hour = "23"
+        if minute == "99":
+            minute = "59"
         year = int(year)
         month = int(month)
         day = int(day)
@@ -267,23 +274,22 @@ def find_datetime_end(code, to, datetime_end, dir_data):
 def find_operation_period_from_station_wise_data_ts(code, dir_data):
     fn = station_data_filename_handler(code, dir_data)
     df = pd.read_csv(fn)
-    beginning = str(df['year'].min()) + '-01-01 12:00:00'
-    end = str(df['year'].max()) + '-12-31 23:59:59'
+    beginning = str(df["year"].min()) + "-01-01 12:00:00"
+    end = str(df["year"].max()) + "-12-31 23:59:59"
     return beginning, end
 
 
-def calc_datetime_b_datetime_e_duration(
-        meta_in, date_beginning, date_end, dir_data):
+def calc_datetime_b_datetime_e_duration(meta_in, date_beginning, date_end, dir_data):
     meta = meta_in.copy()
-    codes = list(meta['code'])
+    codes = list(meta["code"])
     for i_code, code in enumerate(codes):
         date_b = find_datetime_beginning(
-            code, meta.at[i_code, 'from'], date_beginning, dir_data)
-        date_e = find_datetime_end(
-            code, meta.at[i_code, 'to'], date_end, dir_data)
-        meta.at[i_code, 'datetime_b'] = date_b
-        meta.at[i_code, 'datetime_e'] = date_e
-        meta.at[i_code, 'duration_ts'] = (date_e - date_b).days / 365.2425
+            code, meta.at[i_code, "from"], date_beginning, dir_data
+        )
+        date_e = find_datetime_end(code, meta.at[i_code, "to"], date_end, dir_data)
+        meta.at[i_code, "datetime_b"] = date_b
+        meta.at[i_code, "datetime_e"] = date_e
+        meta.at[i_code, "duration_ts"] = (date_e - date_b).days / 365.2425
     return meta
 
 
@@ -293,15 +299,18 @@ def find_first_and_last_record_of_station(station, dir_data):
     df = add_datetime_column_to_dataframe(df)
     # print(df)
     first = datetime.datetime.strftime(
-        df.at[df.index[0], "date_time"], "%Y-%m-%d %H:%M:%S")
+        df.at[df.index[0], "date_time"], "%Y-%m-%d %H:%M:%S"
+    )
     last = datetime.datetime.strftime(
-        df.at[df.index[-1], "date_time"], "%Y-%m-%d %H:%M:%S")
+        df.at[df.index[-1], "date_time"], "%Y-%m-%d %H:%M:%S"
+    )
     return [first, last]
 
 
 ################################################################################
 #  Counting intensities and other operations
 ################################################################################
+
 
 def take_data_subset_by_period_ts(station, datetime_b, datetime_e, dir_data):
     filename = station_data_filename_handler(station, dir_data)
@@ -329,8 +338,7 @@ def create_intensity_ro_table_of_period_ts(actual, dir_data):
         else:
             date_b = actual.at[i_station, "from"]
             date_e = actual.at[i_station, "to"]
-            df = take_data_subset_by_period_ts(
-                station, date_b, date_e, dir_data)
+            df = take_data_subset_by_period_ts(station, date_b, date_e, dir_data)
             if df is not None:
                 cum_counts = count_intensity_in_dataframe(df)
             else:
@@ -342,24 +350,23 @@ def create_intensity_ro_table_of_period_ts(actual, dir_data):
     actual_res_sum["froms"] = list(actual["from"])
     actual_res_sum["tos"] = list(actual["to"])
     duration = actual_res_sum["duration"]
-    actual_res_sum = actual_res_sum.drop(labels=['from', 'to'])
+    actual_res_sum = actual_res_sum.drop(labels=["from", "to"])
     ro = actual_res_sum[columns]
     ro = ro[ro > 0] / duration * 365.2425
     return ro, actual_res_sum
 
+
 #
 # Alias for backward compatibility
 #
-def find_intensity_ro_regression_summarize_ts(
-        meta, station, set_dict, dir_data):
-    return find_intensity_ro_summarize_ts(
-        meta, station, set_dict, dir_data)
+def find_intensity_ro_regression_summarize_ts(meta, station, set_dict, dir_data):
+    return find_intensity_ro_summarize_ts(meta, station, set_dict, dir_data)
+
 
 #
 # No test is provided for the following.
 #
-def find_intensity_ro_summarize_ts(
-        meta, station, set_dict, dir_data):
+def find_intensity_ro_summarize_ts(meta, station, set_dict, dir_data):
     meta_1 = meta[meta["code_prime"] == station]
     meta_1 = meta_1.reset_index(drop=True)
     available = find_available_periods_meta_1_ts(meta_1)
@@ -369,8 +376,7 @@ def find_intensity_ro_summarize_ts(
     summary_pre["latitude"] = calc_latitude(meta_1.at[0, "lat"])
     summary_pre["longitude"] = calc_longitude(meta_1.at[0, "lon"])
     summary_pre["address"] = meta_1.at[0, "address"]
-    ro, summary = \
-        create_intensity_ro_table_of_period_ts(actual, dir_data)
+    ro, summary = create_intensity_ro_table_of_period_ts(actual, dir_data)
     summary = pd.concat([summary_pre, summary])
     return ro, summary
 
@@ -406,16 +412,14 @@ def combine_if_no_gaps(gaps, diss):
                     dis_new[i_int] = diss[i_st + 1][i_int].copy()
                 else:
                     diss_int = diss[i_st + 1][i_int].copy()
-                    dis_new[i_int] = pd.concat([
-                    diss_new[i_new][i_int], diss_int
-                ])
+                    dis_new[i_int] = pd.concat([diss_new[i_new][i_int], diss_int])
             diss_new[i_new] = dis_new
         else:
             for i_int in range(7):
                 if not diss[i_st + 1][i_int].empty:
                     dis_new[i_int] = diss[i_st + 1][i_int].copy()
             diss_new.append(dis_new)
-            i_new +=1
+            i_new += 1
     return diss_new
 
 
@@ -430,10 +434,12 @@ def create_stationwise_dataframe(actual, dir_data):
     diss = []
     for i_st, station in enumerate(stations):
         d7, d6, d5, d4, d3, d2, d1 = create_subdfs_by_intensities_essentials(
-            dfsts[i_st], beginning, end)
+            dfsts[i_st], beginning, end
+        )
         dis = [d1, d2, d3, d4, d5, d6, d7]
         diss.append(dis)
     return diss
+
 
 #
 # No test is provided for the following.
@@ -445,8 +451,8 @@ def create_interval_dataframe_ts(diss):
         for dis in diss:
             if dis[i_int] is not None:
                 df = dis[i_int]
-                df['diff'] = df['date_time'].diff() / np.timedelta64(1, "D")
-                intervals = (np.array(df['diff']).astype(np.float64))[1:]
+                df["diff"] = df["date_time"].diff() / np.timedelta64(1, "D")
+                intervals = (np.array(df["diff"]).astype(np.float64))[1:]
                 intervalss.append(intervals)
         if intervalss == []:
             dfi = None
@@ -456,9 +462,9 @@ def create_interval_dataframe_ts(diss):
             suvf = 1 - np.arange(n) / n
             counts = n - np.arange(n)
             dfi = pd.DataFrame()
-            dfi['interval'] = np.sort(intervals_this_int)
-            dfi['suvf'] = suvf
-            dfi['counts'] = counts
+            dfi["interval"] = np.sort(intervals_this_int)
+            dfi["suvf"] = suvf
+            dfi["counts"] = counts
         dfis.append(dfi)
     return dfis
 
@@ -488,24 +494,24 @@ def create_subdfs_by_intensities_essentials(df_st, beginning, end_t):
     if type(end_t) is str:
         # print(end_t, type(end_t))
         end_t = datetime.datetime.strptime(end_t, "%Y-%m-%d %H:%M:%S")
-    df = df[df['date_time'] >= beginning]
-    df = df[df['date_time'] <= end_t]
-    df['intensity'] = df['intensity'].astype(str)
+    df = df[df["date_time"] >= beginning]
+    df = df[df["date_time"] <= end_t]
+    df["intensity"] = df["intensity"].astype(str)
     df = df.reset_index(drop=True)
-    l7 = ['7']
-    l6 = ['6', '7', 'C', 'D']
-    l5 = ['5', '6', '7', 'A', 'B', 'C', 'D']
-    l4 = ['4', '5', '6', '7', 'A', 'B', 'C', 'D']
-    l3 = ['3', '4', '5', '6', '7', 'A', 'B', 'C', 'D']
-    l2 = ['2', '3', '4', '5', '6', '7', 'A', 'B', 'C', 'D']
-    l1 = ['1', '2', '3', '4', '5', '6', '7', 'A', 'B', 'C', 'D']
-    d7 = df[df['intensity'].isin(l7)]
-    d6 = df[df['intensity'].isin(l6)]
-    d5 = df[df['intensity'].isin(l5)]
-    d4 = df[df['intensity'].isin(l4)]
-    d3 = df[df['intensity'].isin(l3)]
-    d2 = df[df['intensity'].isin(l2)]
-    d1 = df[df['intensity'].isin(l1)]
+    l7 = ["7"]
+    l6 = ["6", "7", "C", "D"]
+    l5 = ["5", "6", "7", "A", "B", "C", "D"]
+    l4 = ["4", "5", "6", "7", "A", "B", "C", "D"]
+    l3 = ["3", "4", "5", "6", "7", "A", "B", "C", "D"]
+    l2 = ["2", "3", "4", "5", "6", "7", "A", "B", "C", "D"]
+    l1 = ["1", "2", "3", "4", "5", "6", "7", "A", "B", "C", "D"]
+    d7 = df[df["intensity"].isin(l7)]
+    d6 = df[df["intensity"].isin(l6)]
+    d5 = df[df["intensity"].isin(l5)]
+    d4 = df[df["intensity"].isin(l4)]
+    d3 = df[df["intensity"].isin(l3)]
+    d2 = df[df["intensity"].isin(l2)]
+    d1 = df[df["intensity"].isin(l1)]
     return d7, d6, d5, d4, d3, d2, d1
 
 
@@ -532,21 +538,27 @@ def find_lonlat_for_station(station, code_p):
     # print(dfsel)
     return [calc_longitude(dfsel.at[0, "lon"]), calc_latitude(dfsel.at[0, "lat"])]
 
+
 #
 # No test is provided for the following.
 #
 def calc_latlon(meta):
-    temp = meta.loc[:, ['lat', 'lon']]
-    temp['lats'] = temp['lat'].apply(str)
-    temp.loc[:, 'lat0'] = temp.loc[:, 'lats'].str[:2]
-    temp['lat1'] = temp['lats'].str[2:4]
-    temp['lon0'] = temp['lon'].astype(str).str[:3]
-    temp['lon1'] = temp['lon'].astype(str).str[3:5]
-    meta['latitude'] = pd.to_numeric(temp['lat0'], errors='coerce') + \
-        pd.to_numeric(temp['lat1'], errors='coerce') / 60
-    meta['longitude'] = pd.to_numeric(temp['lon0'], errors='coerce') + \
-        pd.to_numeric(temp['lon1'], errors='coerce') / 60
+    temp = meta.loc[:, ["lat", "lon"]]
+    temp["lats"] = temp["lat"].apply(str)
+    temp.loc[:, "lat0"] = temp.loc[:, "lats"].str[:2]
+    temp["lat1"] = temp["lats"].str[2:4]
+    temp["lon0"] = temp["lon"].astype(str).str[:3]
+    temp["lon1"] = temp["lon"].astype(str).str[3:5]
+    meta["latitude"] = (
+        pd.to_numeric(temp["lat0"], errors="coerce")
+        + pd.to_numeric(temp["lat1"], errors="coerce") / 60
+    )
+    meta["longitude"] = (
+        pd.to_numeric(temp["lon0"], errors="coerce")
+        + pd.to_numeric(temp["lon1"], errors="coerce") / 60
+    )
     return meta
+
 
 #
 # No test is provided for the following.
@@ -561,10 +573,10 @@ def calc_range_latlon(meta, include_all_japan_lands):
         lol = 122 + 55 / 60 + 57 / 3600
         lou = 153 + 59 / 60 + 12 / 3600
     else:
-        lal = meta['latitude'].min()
-        lau = meta['latitude'].max()
-        lol = meta['longitude'].min()
-        lou = meta['longitude'].max()
+        lal = meta["latitude"].min()
+        lau = meta["latitude"].max()
+        lol = meta["longitude"].min()
+        lou = meta["longitude"].max()
     return lal, lau, lol, lou
 
 
@@ -577,7 +589,7 @@ def calc_range_latlon(meta, include_all_japan_lands):
 # No test is provided for the following.
 #
 def find_having_int_7(meta, dir_data):
-    codes = list(meta['code'])
+    codes = list(meta["code"])
     count_int_7 = 0
     having_int_7 = []
     for code in codes:
@@ -588,38 +600,43 @@ def find_having_int_7(meta, dir_data):
             # print(ex)
             pass
         else:
-            if '7' in set(df['intensity']):
+            if "7" in set(df["intensity"]):
                 having_int_7.append(code)
     return having_int_7
+
 
 #
 # No test is provided for the following.
 #
 def find_having_int_6(meta, dir_data):
-    codes = list(meta['code'])
+    codes = list(meta["code"])
     count_int_7 = 0
     having_int_7 = []
     for code in codes:
         try:
-            df = pd.read_csv(dir_data + 'st_' + str(code) + '.txt')
+            df = pd.read_csv(dir_data + "st_" + str(code) + ".txt")
         except Exception as ex:
             print(ex)
         else:
-            if '6' in set(df['intensity']) or 'C' in set(df['intensity']) or \
-                    'D' in set(df['intensity']) or '7' in set(df['intensity']):
+            if (
+                "6" in set(df["intensity"])
+                or "C" in set(df["intensity"])
+                or "D" in set(df["intensity"])
+                or "7" in set(df["intensity"])
+            ):
                 having_int_7.append(code)
     return having_int_7
 
 
 def find_largest_files(dir_data):
-    dfsize = pd.DataFrame(columns=['code', 'filesize'])
+    dfsize = pd.DataFrame(columns=["code", "filesize"])
     with os.scandir(dir_data) as it:
         i_code = 0
         for entry in it:
-            dfsize.at[i_code, 'code'] = entry.path[-11:-4]
-            dfsize.at[i_code, 'filesize'] = entry.stat().st_size
+            dfsize.at[i_code, "code"] = entry.path[-11:-4]
+            dfsize.at[i_code, "filesize"] = entry.stat().st_size
             i_code += 1
-    dfsize = dfsize.sort_values(by='filesize', ascending=False)
+    dfsize = dfsize.sort_values(by="filesize", ascending=False)
     return dfsize.head(10)
 
 
@@ -628,6 +645,7 @@ def find_largest_files(dir_data):
 # Foreshock-aftershock-swarm correction
 #
 ###############################################################################
+
 
 #
 # No test is provided for the following.
@@ -646,10 +664,20 @@ def fit_to_first_linear_part(ints_ot, suvf_ot):
         x_seps.append(ints_ot[n_sep])
         reg_0 = scipy.stats.linregress(ints_ot[:n_sep], np.log10(suvf_ot[:n_sep]))
         reg_1 = scipy.stats.linregress(ints_ot[n_sep:], np.log10(suvf_ot[n_sep:]))
-        sum_0 = ((np.log10(suvf_ot[:n_sep]) - \
-                    (reg_0.intercept + reg_0.slope * ints_ot[:n_sep])) ** 2).sum()
-        sum_1 = ((np.log10(suvf_ot[n_sep:]) - \
-                    (reg_1.intercept + reg_1.slope * ints_ot[n_sep:])) ** 2).sum()
+        sum_0 = (
+            (
+                np.log10(suvf_ot[:n_sep])
+                - (reg_0.intercept + reg_0.slope * ints_ot[:n_sep])
+            )
+            ** 2
+        ).sum()
+        sum_1 = (
+            (
+                np.log10(suvf_ot[n_sep:])
+                - (reg_1.intercept + reg_1.slope * ints_ot[n_sep:])
+            )
+            ** 2
+        ).sum()
         sums[i_sep] = sum_0 + sum_1
         reg_0s.append(reg_0)
     sums = np.array(sums)
@@ -657,7 +685,7 @@ def fit_to_first_linear_part(ints_ot, suvf_ot):
     i_min = np.argmin(sums)
     reg_min = reg_0s[i_min]
     x_sep = x_seps[i_min]
-    factor = 10 ** reg_min.intercept
+    factor = 10**reg_min.intercept
     return reg_min, factor, x_sep
 
 
@@ -677,11 +705,12 @@ def find_correction_factor_internsity(intervals, suvf, thres):
         return ser
     if n_overthres >= 10:
         reg, factor, interval_1st_fit_upp = fit_to_first_linear_part(
-            overthres, oversuvf)
+            overthres, oversuvf
+        )
         ser["intercept"] = reg.intercept
         ser["slope"] = reg.slope
         ser["rvalue"] = reg.rvalue
-        ser['interval_1st_fit_upp'] = interval_1st_fit_upp
+        ser["interval_1st_fit_upp"] = interval_1st_fit_upp
         if factor < 1:
             ser["factor"] = factor
         elif factor > 1:
@@ -696,7 +725,7 @@ def find_correction_factor_internsity(intervals, suvf, thres):
     #         ser["rvalue"] = reg.rvalue
     #     elif factor >= 1:
     #         if n_intervals > 1:
-    #             factor = (n_overthres + 1) / (n_intervals + 1) 
+    #             factor = (n_overthres + 1) / (n_intervals + 1)
     #             ser["factor"] = factor
     else:
         factor = (n_overthres + 1) / (n_intervals + 1)
@@ -704,7 +733,7 @@ def find_correction_factor_internsity(intervals, suvf, thres):
     return ser
 
 
-def find_correction_factor(dfs_intervals, thres_int=[4,8,16,32,64,128]):
+def find_correction_factor(dfs_intervals, thres_int=[4, 8, 16, 32, 64, 128]):
     series = []
     for i_int, intensity in enumerate([1, 2, 3, 4, 5]):
         df_intervals = dfs_intervals[intensity - 1]
@@ -728,7 +757,7 @@ def calc_corrected_ro(df_factor, ro):
     df_freq = pd.DataFrame(a, columns=["ro", "corrected"])
     n_freq = len(ro)
     df_freq["ro"][:n_freq] = ro
-    df_freq["corrected"][:n] = factor[:n] * ro[:n] 
+    df_freq["corrected"][:n] = factor[:n] * ro[:n]
     df_factor = pd.concat([df_int, df_factor, df_freq], axis=1)
     return df_factor
 
@@ -736,7 +765,7 @@ def calc_corrected_ro(df_factor, ro):
 def add_corrected_results_to_summary(summary, df_corrected):
     for intensity in [1, 2, 3, 4, 5, 6, 7]:
         idx = "int" + str(intensity) + "_roc"
-        summary[idx] = df_corrected.at[intensity-1, "corrected"]
+        summary[idx] = df_corrected.at[intensity - 1, "corrected"]
     return summary
 
 
@@ -745,20 +774,21 @@ def add_corrected_results_to_summary(summary, df_corrected):
 #
 def do_aftershock_correction(df_org, station_prime, set_dict, dir_data):
     dfs_intervals = create_interval_datasets_ts(
-        df_org, station_prime, set_dict, dir_data)
-    ro, summary = \
-        find_intensity_ro_summarize_ts(
-            df_org, station_prime, set_dict, dir_data)
+        df_org, station_prime, set_dict, dir_data
+    )
+    ro, summary = find_intensity_ro_summarize_ts(
+        df_org, station_prime, set_dict, dir_data
+    )
     ro = np.array(ro.astype(np.float64))
-    df_factor = find_correction_factor(dfs_intervals)  #thres_int=[5, 10, 20, 40]
+    df_factor = find_correction_factor(dfs_intervals)  # thres_int=[5, 10, 20, 40]
     df_corrected = calc_corrected_ro(df_factor, ro)
     summary_corrected = add_corrected_results_to_summary(summary, df_corrected)
     return dfs_intervals, df_corrected, summary_corrected
 
 
 def main():
-    print('This is a library.')
+    print("This is a library.")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
