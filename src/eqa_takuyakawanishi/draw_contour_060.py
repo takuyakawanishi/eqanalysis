@@ -7,10 +7,12 @@ import matplotlib.tri as tri
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 import pandas as pd
+
 # import scipy.stats
 import scipy.ndimage as ndimage
 
 import sys
+
 sys.path.append("./")
 import eqanalysis.src.eqa_takuyakawanishi.eqa as eqa
 
@@ -29,33 +31,47 @@ class Settings:
         self.map_include_all_japan_lands = False
         # self.contour_to_draw = 'est7'
         self.contour_log_scale = True
-        self.contour_cmap = 'Reds'
-        self.contour_lstep = .5
+        self.contour_cmap = "Reds"
+        self.contour_lstep = 0.5
         self.contour_lmin = -4
         self.contour_lmax = None
         self.contour_plot_stations = False
         self.contour_station_size = 1
-        self.contour_station_alpha = 1.
+        self.contour_station_alpha = 1.0
 
 
-def draw_scatter(meta, col, minus=True, log_scale=True, cmap='Reds',
-                 lmax= None, lmin=None, lstep=.5, colorbartitle=None,
-                 lon_min=122, lon_max=154, lat_min=20, lat_max=46,
-                 contour_alpha=1,
-                 plot_stations=True, station_size=5, station_alpha=.5):
+def draw_scatter(
+    meta,
+    col,
+    minus=True,
+    log_scale=True,
+    cmap="Reds",
+    lmax=None,
+    lmin=None,
+    lstep=0.5,
+    colorbartitle=None,
+    lon_min=122,
+    lon_max=154,
+    lat_min=20,
+    lat_max=46,
+    contour_alpha=1,
+    plot_stations=True,
+    station_size=5,
+    station_alpha=0.5,
+):
     fig = plt.figure(figsize=(10.8, 10.8), facecolor=None)
     ax = fig.add_axes(
-        [0.025, 0.08, .9, .9],
-        projection=ccrs.PlateCarree(central_longitude=180))
+        [0.025, 0.08, 0.9, 0.9], projection=ccrs.PlateCarree(central_longitude=180)
+    )
     fig.patch.set_alpha(0)
-    ax.tick_params(axis='both', which='both', direction='in')
-    ax.coastlines(resolution='10m', lw=.5)
+    ax.tick_params(axis="both", which="both", direction="in")
+    ax.coastlines(resolution="10m", lw=0.5)
     ax.set_extent([lon_min, lon_max, lat_min, lat_max])
-    latitude = meta['latitude']
-    longitude = meta['longitude']
+    latitude = meta["latitude"]
+    longitude = meta["longitude"]
     val = meta[col]
     if minus:
-        val = - val
+        val = -val
     if log_scale:
         val = meta[col].apply(np.log10)
     if lmax is not None:
@@ -80,12 +96,20 @@ def draw_scatter(meta, col, minus=True, log_scale=True, cmap='Reds',
     mesh_lon_i, mesh_lat_i = np.meshgrid(lon_i, lat_i)
     val_i = interpolator(mesh_lon_i, mesh_lat_i)
     val_i2 = ndimage.gaussian_filter(val_i, sigma=0, order=0)
-    ax.add_feature(cfeature.OCEAN, zorder=100, edgecolor='k', lw=0.5,
-                   facecolor='#eeeeee')
+    ax.add_feature(
+        cfeature.OCEAN, zorder=100, edgecolor="k", lw=0.5, facecolor="#eeeeee"
+    )
     scatter = ax.scatter(
-        longitude, latitude, c=val, transform=ccrs.PlateCarree(),
-        cmap=cmap, alpha=contour_alpha, zorder=200, clip_on=False,
-        edgecolor='k', linewidth=.5
+        longitude,
+        latitude,
+        c=val,
+        transform=ccrs.PlateCarree(),
+        cmap=cmap,
+        alpha=contour_alpha,
+        zorder=200,
+        clip_on=False,
+        edgecolor="k",
+        linewidth=0.5,
     )
     divider = make_axes_locatable(ax)
     ax_cb = divider.new_horizontal(size="5%", pad=0.05, axes_class=plt.Axes)
@@ -97,33 +121,44 @@ def draw_scatter(meta, col, minus=True, log_scale=True, cmap='Reds',
     return fig, ax
 
 
-def draw_contour(meta, col, minus=True, log_scale=True, cmap='Reds',
-                 lmax=None, lmin=None, lstep=.5, colorbartitle=None,
-                 lon_min=122, lon_max=154, lat_min=20, lat_max=46,
-                 contour_alpha=1,
-                 plot_stations=True, station_size=5, station_alpha=.5
-                 ):
+def draw_contour(
+    meta,
+    col,
+    minus=True,
+    log_scale=True,
+    cmap="Reds",
+    lmax=None,
+    lmin=None,
+    lstep=0.5,
+    colorbartitle=None,
+    lon_min=122,
+    lon_max=154,
+    lat_min=20,
+    lat_max=46,
+    contour_alpha=1,
+    plot_stations=True,
+    station_size=5,
+    station_alpha=0.5,
+):
 
     # mloc= plt.MultipleLocator(5)
     fig = plt.figure(figsize=(6.6, 0.88 * 6.6), facecolor=None, dpi=1200)
     # ax = fig.add_subplot(
     #     1, 1, 1, projection=ccrs.PlateCarree(central_longitude=180))
-    ax = fig.add_axes(
-        [0.02, 0.02, .92, .94],
-        projection=ccrs.PlateCarree())
+    ax = fig.add_axes([0.02, 0.02, 0.92, 0.94], projection=ccrs.PlateCarree())
     # ax.set_facecolor(color=None)
     fig.patch.set_alpha(0)
 
-    ax.tick_params(axis='both', which='both', direction='in')
-    ax.coastlines(resolution='10m', lw=.5)
+    ax.tick_params(axis="both", which="both", direction="in")
+    ax.coastlines(resolution="10m", lw=0.5)
     # ax.gridlines(draw_labels=True, xlocs=mloc, ylocs=mloc, dms=True,
     #              zorder=-100)
     ax.set_extent([lon_min, lon_max, lat_min, lat_max])
-    latitude = meta['latitude']
-    longitude = meta['longitude']
+    latitude = meta["latitude"]
+    longitude = meta["longitude"]
     values_col = np.array(meta[col])
     if minus:
-        vala = - values_col[values_col < 0]
+        vala = -values_col[values_col < 0]
         vala = vala.astype(np.float64)
     else:
         # meta = meta[meta[col] > 0]
@@ -158,53 +193,77 @@ def draw_contour(meta, col, minus=True, log_scale=True, cmap='Reds',
     mesh_lon_i, mesh_lat_i = np.meshgrid(lon_i, lat_i)
     val_i = interpolator(mesh_lon_i, mesh_lat_i)
     val_i2 = ndimage.gaussian_filter(val_i, sigma=0, order=0)
-    ax.add_feature(cfeature.OCEAN, zorder=100, edgecolor='k', lw=0.5,
-                   facecolor='#cccccc')
+    ax.add_feature(
+        cfeature.OCEAN, zorder=100, edgecolor="k", lw=0.5, facecolor="#cccccc"
+    )
     contourf = ax.contourf(
-        lon_i, lat_i, val_i2, transform=ccrs.PlateCarree(), levels=levels,
-        cmap=cmap, alpha=contour_alpha
+        lon_i,
+        lat_i,
+        val_i2,
+        transform=ccrs.PlateCarree(),
+        levels=levels,
+        cmap=cmap,
+        alpha=contour_alpha,
     )
     ax.contour(
-        lon_i, lat_i, val_i2, transform=ccrs.PlateCarree(), levels=levels,
-        linewidths=.3, colors='k', linestyles='-'
+        lon_i,
+        lat_i,
+        val_i2,
+        transform=ccrs.PlateCarree(),
+        levels=levels,
+        linewidths=0.3,
+        colors="k",
+        linestyles="-",
     )
     divider = make_axes_locatable(ax)
     ax_cb = divider.new_horizontal(size="4%", pad=0.05, axes_class=plt.Axes)
 
     fig.add_axes(ax_cb)
     cb = plt.colorbar(contourf, cax=ax_cb)
-    cb.ax.set_title(colorbartitle, fontsize=9)
-    cb.ax.tick_params(direction="in", labelsize=9) 
+    #
+    # cb.ax.set_title(colorbartitle, fontsize=9)
+    cb.ax.set_title(
+        "$\\log_{10} (\\mathrm{ERO6+/year})$    ",
+        fontsize=10,
+        # horizontalalignment="right",
+        math_fontfamily="stixsans",
+    )
+    cb.ax.tick_params(direction="in", labelsize=9)
     if plot_stations:
         ax.scatter(
-            longitude, latitude, c='k', transform=ccrs.PlateCarree(),
-            s=station_size, alpha=station_alpha, zorder=2000
+            longitude,
+            latitude,
+            c="k",
+            transform=ccrs.PlateCarree(),
+            s=station_size,
+            alpha=station_alpha,
+            zorder=2000,
         )
 
     return fig, ax
 
 
 def create_colorbar_title(contour_to_draw):
-    if contour_to_draw == 'slope':
+    if contour_to_draw == "slope":
         return "$\\mathrm{slope}$"
-    elif contour_to_draw == 'est7':
+    elif contour_to_draw == "est7":
         return "$\\log_{10}(\\hat{N}(7)/T)$"
-    elif contour_to_draw == 'est6':
+    elif contour_to_draw == "est6":
         return "$\\log_{10}(\\hat{N}(6)/T)$"
     elif contour_to_draw == "est6p5":
         return "$\\log_{10}(\\hat{N}(6.5)/T)$"
-    elif contour_to_draw == 'freq3':
+    elif contour_to_draw == "freq3":
         return "$\\log_{10}(N(3)/T)$"
-    elif contour_to_draw == 'freq2':
+    elif contour_to_draw == "freq2":
         return "$\\log_{10}(N(2)/T)$"
     else:
         return ""
 
 
 def get_lat_lon_intensity_7(meta):
-    meta_sel = meta[meta['code'].isin(stations)]
+    meta_sel = meta[meta["code"].isin(stations)]
     meta_latlon = eqa.calc_latlon(meta_sel)
-    latlons = meta_latlon.loc[:, ['latitude', 'longitude']]
+    latlons = meta_latlon.loc[:, ["latitude", "longitude"]]
     return latlons
 
 
@@ -219,13 +278,12 @@ def main():
     # Settings
     ############################################################################
     #
-    dir_data = 'eqanalysis/data_2024/stationwise_2021/'
+    dir_data = "eqanalysis/data_2024/stationwise_2021/"
     file2read_code_p = "eqanalysis/data_2024/code_p_20231205_df.csv"
     df_code = pd.read_csv(file2read_code_p)
-    file2read_meta = \
-        'eqanalysis/data_2024/intermediates/organized_code_2024_04.csv'
+    file2read_meta = "eqanalysis/data_2024/intermediates/organized_code_2024_04.csv"
     conf = Settings()
-    conf.date_beginning = '1919-01-01 00:00:00'
+    conf.date_beginning = "1919-01-01 00:00:00"
     conf.date_end = "2011-03-10 23:59:59"
     print("Date beginning: ", conf.date_beginning)
     print("Date end:       ", conf.date_end)
@@ -241,9 +299,9 @@ def main():
     # conf.n_int5_min = 0
 
     # conf.duration_min = 5
-    conf.draw = 'contour'
-    # contour_to_draw = ('est7', 'est6', 'st6p5') 
-    conf.contour_to_draw = 'ero6p'
+    conf.draw = "contour"
+    # contour_to_draw = ('est7', 'est6', 'st6p5')
+    conf.contour_to_draw = "ero6p"
     conf.minus = False
     conf.contour_plot_int_7 = True
     conf.int7_station_size = 50
@@ -257,14 +315,28 @@ def main():
     conf.contour_plot_stations = False
     conf.contour_lmax = -1
     # conf.contour_lmin = - 4
-    conf.contour_lstep = .5
-    conf.contour_station_size = 1.
-    conf.contour_station_alpha = .3
-    conf.int7_stations = [5310700, 1460600, 2205220, 3710044, 7413631, 
-                          7413931, 3900131, 3900620]
+    conf.contour_lstep = 0.5
+    conf.contour_station_size = 1.0
+    conf.contour_station_alpha = 0.3
+    conf.int7_stations = [
+        5310700,
+        1460600,
+        2205220,
+        3710044,
+        7413631,
+        7413931,
+        3900131,
+        3900620,
+    ]
     conf.int7_dates = [
-        "1995 Jan 17", "2018 Sep 6", "2011 Mar 11", "2004 Oct 23",
-        "2016 Apr 16", "2016 Apr 14", "2024 Jan 1", "2024 Jan 1"
+        "1995 Jan 17",
+        "2018 Sep 6",
+        "2011 Mar 11",
+        "2004 Oct 23",
+        "2016 Apr 16",
+        "2016 Apr 14",
+        "2024 Jan 1",
+        "2024 Jan 1",
     ]
     # if conf.contour_to_draw == 'freq2':
     #     conf.contour_lmin = - 0.5
@@ -276,13 +348,11 @@ def main():
     #     conf.contour_log_scale = False
     #     conf.contour_lstep = 0.1
     #     conf.contour_lmin = - 1
-    
-    file2read_meta = \
-        'eqanalysis/data_2024/intermediates/organized_code_2024_04.csv'
+
+    file2read_meta = "eqanalysis/data_2024/intermediates/organized_code_2024_04.csv"
     df_org = pd.read_csv(file2read_meta)
     df_org = eqa.calc_latlon(df_org)
-    fn_est = \
-        "peps/results/japan_cor_ERO6p_ge2_form_1996-04-01_to_2021-12-31.csv"
+    fn_est = "peps/results/japan_cor_ERO6p_ge2_form_1996-04-01_to_2021-12-31.csv"
 
     # fn_est = \
     #     "peps/results/japan_cor_ERO6p_ge2_form_1996-04-01_to_2011-03-10.csv"
@@ -302,57 +372,66 @@ def main():
 
         df_est.at[idx, "latitude"] = df_sel.at[0, "latitude"]
         df_est.at[idx, "longitude"] = df_sel.at[0, "longitude"]
- 
+
     print(df_est.head(5))
     print(len(df_est))
-    df_est = df_est.groupby(['latitude', 'longitude']).agg({'ero6p': ['max']})
+    df_est = df_est.groupby(["latitude", "longitude"]).agg({"ero6p": ["max"]})
     # df_est.columns = df_est.columns.to_flat_index()
     # df_est.columns = ['latitude', 'longitude', 'est6p5']
     df_est = df_est.reset_index()
     df_est.columns = df_est.columns.to_flat_index()
-    df_est.columns = ['latitude', 'longitude', 'ero6p']
+    df_est.columns = ["latitude", "longitude", "ero6p"]
     print(df_est)
     print(type(df_est))
     # sys.exit()
 
     n_relevant_stations = len(df_est)
     print("Number of relevant stations = {}".format(n_relevant_stations))
-    lal, lau, lol, lou = eqa.calc_range_latlon(
-        df_est, conf.map_include_all_japan_lands)
+    lal, lau, lol, lou = eqa.calc_range_latlon(df_est, conf.map_include_all_japan_lands)
 
     print("df_est")
     print(df_est.head(3))
     print("conf.contour_to_draw = ", conf.contour_to_draw)
 
-    if conf.draw == 'contour':
+    if conf.draw == "contour":
         fig, ax = draw_contour(
-            df_est, conf.contour_to_draw, minus=conf.minus,
+            df_est,
+            conf.contour_to_draw,
+            minus=conf.minus,
             log_scale=conf.contour_log_scale,
             cmap=conf.contour_cmap,
-            lmin=conf.contour_lmin, lmax=conf.contour_lmax,
+            lmin=conf.contour_lmin,
+            lmax=conf.contour_lmax,
             lstep=conf.contour_lstep,
             colorbartitle=conf.contour_colorbartitle,
-            lon_min=lol - .1, lon_max=lou + .1,
-            lat_min=lal - .1, lat_max=lau + .1,
+            lon_min=lol - 0.1,
+            lon_max=lou + 0.1,
+            lat_min=lal - 0.1,
+            lat_max=lau + 0.1,
             contour_alpha=conf.contour_alpha,
             plot_stations=conf.contour_plot_stations,
             station_size=conf.contour_station_size,
-            station_alpha=conf.contour_station_alpha
+            station_alpha=conf.contour_station_alpha,
         )
-    elif conf.draw == 'scatter':
+    elif conf.draw == "scatter":
         fig, ax = draw_scatter(
-            df_est, conf.contour_to_draw, minus=conf.minus,
+            df_est,
+            conf.contour_to_draw,
+            minus=conf.minus,
             log_scale=conf.contour_log_scale,
             cmap=conf.contour_cmap,
-            lmin=conf.contour_lmin, lmax=conf.contour_lmax,
+            lmin=conf.contour_lmin,
+            lmax=conf.contour_lmax,
             lstep=conf.contour_lstep,
             colorbartitle=conf.contour_colorbartitle,
-            lon_min=lol - .1, lon_max=lou + .1,
-            lat_min=lal - .1, lat_max=lau + .1,
+            lon_min=lol - 0.1,
+            lon_max=lou + 0.1,
+            lat_min=lal - 0.1,
+            lat_max=lau + 0.1,
             contour_alpha=conf.contour_alpha,
             plot_stations=conf.contour_plot_stations,
             station_size=conf.contour_station_size,
-            station_alpha=conf.contour_station_alpha
+            station_alpha=conf.contour_station_alpha,
         )
     # if conf.contour_plot_int_7:
     int7s = conf.int7_stations
@@ -370,30 +449,46 @@ def main():
         elif i_int7 == 7:
             movedown = 1.2
         elif i_int7 == 6:
-            movedown = .8
+            movedown = 0.8
         # https://stackoverflow.com/questions/25416600/why-the-annotate-worked-unexpected-here-in-cartopy
         ax.annotate(
-            "", xy=lonlat7, 
+            "",
+            xy=lonlat7,
             xytext=(lonlat7[0] - 1.6, lonlat7[1] + 2.5 - movedown),
             xycoords=transform,
-            arrowprops=dict(arrowstyle="-", linewidth=1.2, shrinkA=0, shrinkB=0,
-                            color=(0.9, 1, 0.7)), 
-            va="bottom", ha="right", zorder=3000)
+            arrowprops=dict(
+                arrowstyle="-", linewidth=1.2, shrinkA=0, shrinkB=0, color=(0.9, 1, 0.7)
+            ),
+            va="bottom",
+            ha="right",
+            zorder=3000,
+        )
         ax.annotate(
-            "", xy=lonlat7, 
+            "",
+            xy=lonlat7,
             xytext=(lonlat7[0] - 1.6, lonlat7[1] + 2.5 - movedown),
             xycoords=transform,
-            arrowprops=dict(arrowstyle="-", linewidth=.3, shrinkA=0, shrinkB=0,
-                            color=(0, 0, 0)), 
-            va="bottom", ha="right", zorder=5000, fontsize=8)        
+            arrowprops=dict(
+                arrowstyle="-", linewidth=0.3, shrinkA=0, shrinkB=0, color=(0, 0, 0)
+            ),
+            va="bottom",
+            ha="right",
+            zorder=5000,
+            fontsize=8,
+        )
         ax.annotate(
-            conf.int7_dates[i_int7], xy=lonlat7, 
+            conf.int7_dates[i_int7],
+            xy=lonlat7,
             xytext=(lonlat7[0] - 1.6, lonlat7[1] + 2.5 - movedown),
             xycoords=transform,
-            va="bottom", ha="right", zorder=5000, fontsize=7)
+            va="bottom",
+            ha="right",
+            zorder=5000,
+            fontsize=7,
+        )
         # print(lonlat7)
         # ax.scatter(
-        #     lonlat7[0], lonlat7[1], color=(0.6, 1, 0.4), 
+        #     lonlat7[0], lonlat7[1], color=(0.6, 1, 0.4),
         #     transform=ccrs.PlateCarree(), edgecolors="k",
         #     linewidths=0.5,
         #     s=6, alpha=1, zorder=3000, marker="o"
@@ -408,5 +503,5 @@ def main():
     plt.show()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
