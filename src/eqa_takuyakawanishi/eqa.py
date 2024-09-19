@@ -444,6 +444,34 @@ def create_stationwise_dataframe(actual, dir_data):
 #
 # No test is provided for the following.
 #
+# 2024 September 18, create_interval_dataframe_ts
+# We sort the dataframe according to df["date_time"] 
+#
+def create_interval_dataframe_ts_old(diss):
+    dfis = []
+    for i_int in range(7):
+        intervalss = []
+        for dis in diss:
+            if dis[i_int] is not None:
+                df = dis[i_int]
+                df["diff"] = df["date_time"].diff() / np.timedelta64(1, "D")
+                intervals = (np.array(df["diff"]).astype(np.float64))[1:]
+                intervalss.append(intervals)
+        if intervalss == []:
+            dfi = None
+        else:
+            intervals_this_int = np.concatenate(intervalss)
+            n = len(intervals_this_int)
+            suvf = 1 - np.arange(n) / n
+            counts = n - np.arange(n)
+            dfi = pd.DataFrame()
+            dfi["interval"] = np.sort(intervals_this_int)
+            dfi["suvf"] = suvf
+            dfi["counts"] = counts
+        dfis.append(dfi)
+    return dfis
+
+
 def create_interval_dataframe_ts(diss):
     dfis = []
     for i_int in range(7):
@@ -451,6 +479,10 @@ def create_interval_dataframe_ts(diss):
         for dis in diss:
             if dis[i_int] is not None:
                 df = dis[i_int]
+                #
+                # The following one line is added, September 18, 2024.
+                #
+                df = df.sort_values(by="date_time")
                 df["diff"] = df["date_time"].diff() / np.timedelta64(1, "D")
                 intervals = (np.array(df["diff"]).astype(np.float64))[1:]
                 intervalss.append(intervals)
