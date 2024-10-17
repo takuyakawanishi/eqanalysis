@@ -566,6 +566,37 @@ class TestForeshockAftershockSwarmCorrection(unittest.TestCase):
         exp_df_corrected.loc[:3, "corrected"] = [0.55 * 75, 0.71 * 26, 0.8 * 5, 2]
         pd.testing.assert_frame_equal(res, exp_df_corrected, rtol=1e-3)
 
+class TestFindCorrectionFactorVariousThresholds(unittest.TestCase):
+
+    def test_find_correction_factor_vt_01(self):
+        df0 = pd.DataFrame(columns=["interval", "suvf", "counts"])
+        df1 = pd.DataFrame(columns=["interval", "suvf", "counts"])
+        df2 = pd.DataFrame(columns=["interval", "suvf", "counts"])
+        df3 = pd.DataFrame(columns=["interval", "suvf", "counts"])
+        df4 = pd.DataFrame(columns=["interval", "suvf", "counts"])
+        thres_int_given = [5, 10, 11, 66, 78]
+        df0["interval"] = [3, 6, 7, 20, 50]  # over thres 4/5 -> 5/6
+        df0["suvf"] = [5 / 5, 4 / 5, 3 / 5, 2 / 5, 1 / 5]
+        df0["counts"] = [5, 4, 3, 2, 1]
+        df1["interval"] = [2, 4, 12, 16]  # over thres 2/4 -> 3/5
+        df1["suvf"] = [1, 0.75, 0.5, 0.25] 
+        df1["counts"] = [4, 3, 2, 1]
+        df2["interval"] = [9, 15, 30]  # over thres 2/3 -> 3/4
+        df2["suvf"] = [1, 2 / 3, 1 / 3]
+        df2["counts"] = [3, 2, 1]
+        dfs = [df0, df1, df2, df3, df4]
+        res = eqa.find_correction_factor(dfs, thres_int_given)
+        exp_d = [
+            [5 / 6, np.nan, np.nan, np.nan],
+            [0.6, np.nan, np.nan, np.nan],
+            [0.75, np.nan, np.nan, np.nan],
+            [0, np.nan, np.nan, np.nan],
+            [0, np.nan, np.nan, np.nan],
+        ]
+        exp_df = pd.DataFrame(exp_d)
+        exp_df.columns = ["factor", "intercept", "slope", "rvalue"]
+        pd.testing.assert_frame_equal(res, exp_df, rtol=1e-3)
+
 
 class TestWithRealData(unittest.TestCase):
 
@@ -588,7 +619,26 @@ class TestWithRealData(unittest.TestCase):
             df_org, 3500000, set_dict, dir_data=dir_data
         )
         ro = np.array(ro.astype(np.float64))
-        df_factor = eqa.find_correction_factor(dfs_intervals)
+        thres_int = [5, 10, 11, 66, 78]
+        df_factor = eqa.find_correction_factor(dfs_intervals, thres_int)
+        print()
+        print(df_factor)
+        dfs_intervals, df_corrected, summary = \
+            eqa.do_aftershock_correction(
+                df_org, 3500000, set_dict, dir_data, thres_int=thres_int
+            )
+        print(df_corrected)
+        print(summary)
+        thres_int = [4, 8, 16, 32, 64]
+        df_factor = eqa.find_correction_factor(dfs_intervals, thres_int)
+        print()
+        print(df_factor)
+        dfs_intervals, df_corrected, summary = \
+            eqa.do_aftershock_correction(
+                df_org, 3500000, set_dict, dir_data
+            )
+        print(df_corrected)
+        print(summary)
 
     # def test_find_having_int_7(self):
     #     #

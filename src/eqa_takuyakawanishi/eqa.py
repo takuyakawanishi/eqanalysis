@@ -765,7 +765,7 @@ def find_correction_factor_internsity(intervals, suvf, thres):
     return ser
 
 
-def find_correction_factor(dfs_intervals, thres_int=[4, 8, 16, 32, 64, 128]):
+def find_correction_factor(dfs_intervals, thres_int):
     series = []
     for i_int, intensity in enumerate([1, 2, 3, 4, 5]):
         df_intervals = dfs_intervals[intensity - 1]
@@ -804,7 +804,9 @@ def add_corrected_results_to_summary(summary, df_corrected):
 #
 # No test is provided for the following.
 #
-def do_aftershock_correction(df_org, station_prime, set_dict, dir_data):
+def do_aftershock_correction(
+        df_org, station_prime, set_dict, dir_data, 
+        thres_int=[4, 8, 16, 32, 64]):
     dfs_intervals = create_interval_datasets_ts(
         df_org, station_prime, set_dict, dir_data
     )
@@ -812,7 +814,8 @@ def do_aftershock_correction(df_org, station_prime, set_dict, dir_data):
         df_org, station_prime, set_dict, dir_data
     )
     ro = np.array(ro.astype(np.float64))
-    df_factor = find_correction_factor(dfs_intervals)  # thres_int=[5, 10, 20, 40]
+    df_factor = find_correction_factor(
+        dfs_intervals, thres_int)  # thres_int=[5, 10, 20, 40]
     df_corrected = calc_corrected_ro(df_factor, ro)
     summary_corrected = add_corrected_results_to_summary(summary, df_corrected)
     return dfs_intervals, df_corrected, summary_corrected
